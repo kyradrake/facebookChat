@@ -1,0 +1,44 @@
+// Homework 2
+// facebook.proto
+// Server Protocol Buffers
+// Colin Banigan and Katherine Drake
+
+// Initialize Service
+
+syntax = "proto3";
+
+service fbChatRoom {
+    rpc List(ListRequest) returns (ListReply) {}
+    
+    rpc Join(JoinRequest) returns (JoinReply) {}
+    
+    rpc Leave(LeaveRequest) returns (LeaveRequest) {}
+}
+
+
+// Initialize Messages
+
+// LIST Messages
+message ListRequest {
+    string name = 1;
+}
+message ListReply {
+    string name = 1;
+    repeated string username = 2;
+}
+
+// JOIN Messages
+message JoinRequest {
+    string name = 1;
+}
+message JoinReply {
+    string name = 1;
+}
+
+// LEAVE Messages
+message LeaveRequest {
+    string name = 1;
+}
+message LeaveReply {
+    string name = 1;
+}
