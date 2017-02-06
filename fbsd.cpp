@@ -22,12 +22,16 @@ using grpc::ServerReaderWriter;
 using grpc::ServerWriter;
 using grpc::Status;
 using facebookChat::fbChatRoom;
+using facebookChat::LoginRequest;
+using facebookChat::LoginReply;
 using facebookChat::ListRequest;
 using facebookChat::ListReply;
 using facebookChat::JoinRequest;
 using facebookChat::JoinReply;
 using facebookChat::LeaveRequest;
 using facebookChat::LeaveReply;
+using facebookChat::ChatRequest;
+using facebookChat::ChatReply;
 
 using namespace std;
 
@@ -114,9 +118,8 @@ class facebookServer final : public fbChatRoom::Service {
     // process client JOIN command
     Status Join(ServerContext* context, const JoinRequest* request,
                      JoinReply* reply) override {
-        cout << "Server in Join function\n";
+        cout << "Server Context: " << context << endl;
         reply->set_name("Joined Chat Room " + request->name());
-        cout << "Server in Join function\n";
         return Status::OK;
     }
 };

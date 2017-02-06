@@ -10,17 +10,28 @@ syntax = "proto3";
 package facebookChat;
 
 service fbChatRoom {
+    rpc Login(LoginRequest) returns (LoginReply) {}
+    
     rpc List(ListRequest) returns (ListReply) {}
     
     rpc Join(JoinRequest) returns (JoinReply) {}
     
-    rpc Leave(LeaveRequest) returns (LeaveRequest) {}
+    rpc Leave(LeaveRequest) returns (LeaveReply) {}
+    
+    rpc Chat(ChatRequest) returns (ChatReply) {}
 }
 
 
 // Initialize Messages
+// Login Messages
+message LoginRequest {
+    string name = 1;
+}
+message LoginReply {
+    string name = 1;
+}
 
-// LIST Messages
+// List Messages
 message ListRequest {
     string name = 1;
 }
@@ -29,7 +40,7 @@ message ListReply {
     repeated string username = 2;
 }
 
-// JOIN Messages
+// Join Messages
 message JoinRequest {
     string name = 1;
 }
@@ -37,10 +48,18 @@ message JoinReply {
     string name = 1;
 }
 
-// LEAVE Messages
+// Leave Messages
 message LeaveRequest {
     string name = 1;
 }
 message LeaveReply {
+    string name = 1;
+}
+
+// Chat Messages
+message ChatRequest {
+    string name = 1;
+}
+message ChatReply {
     string name = 1;
 }
