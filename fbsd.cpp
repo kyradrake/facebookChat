@@ -32,9 +32,11 @@ class facebookServer final : public fbChatRoom::Service {
     facebookServer() {}
     
     // process client JOIN command
-    Status ClientJoin(ServerContext* context, const JoinRequest* request,
-                     JoinReply* reply) {
+    Status Join(ServerContext* context, const JoinRequest* request,
+                     JoinReply* reply) override {
+        cout << "Server in Join function\n";
         reply->set_name("Joined Chat Room " + request->name());
+        cout << "Server in Join function\n";
         return Status::OK;
     }
 };
