@@ -12,12 +12,12 @@ public:
     
     UserData(void){
         name = "";
-        usersConnectedTo = vector<string>;
+        usersConnectedTo = vector<string>();
     }
     
     UserData(string user){
         name = user;
-        usersConnectedTo = vector<string>;
+        usersConnectedTo = vector<string>();
     }
     
     void* addUser(string userToAdd) {

@@ -3,15 +3,6 @@
 // Facebook Chat Room Client
 // Colin Banigan and Katherine Drake
 
-/*
-#include <chrono>
-#include <iostream>
-#include <memory>
-#include <random>
-#include <string>
-#include <thread>
-*/
-
 #include <sstream>
 
 #include <grpc/grpc.h>
@@ -19,7 +10,6 @@
 #include <grpc++/client_context.h>
 #include <grpc++/create_channel.h>
 #include <grpc++/security/credentials.h>
-//#include "helper.h"
 #include "facebook.grpc.pb.h"
 
 using grpc::Channel;
@@ -74,42 +64,6 @@ class facebookClient {
             cout << "Join Reply: " << reply.name();
         }
     }
-    /*
-    
-    Join(JoinRequest) returns (JoinReply) {}
-    
-    void GetFeature() {
-    Point point;
-    Feature feature;
-    point = MakePoint(409146138, -746188906);
-    GetOneFeature(point, &feature);
-    point = MakePoint(0, 0);
-    GetOneFeature(point, &feature);
-  }
-  
-    bool GetOneFeature(const Point& point, Feature* feature) {
-    ClientContext context;
-    Status status = stub_->GetFeature(&context, point, feature);
-    if (!status.ok()) {
-      std::cout << "GetFeature rpc failed." << std::endl;
-      return false;
-    }
-    if (!feature->has_location()) {
-      std::cout << "Server returns incomplete feature." << std::endl;
-      return false;
-    }
-    if (feature->name().empty()) {
-      std::cout << "Found no feature at "
-                << feature->location().latitude()/kCoordFactor_ << ", "
-                << feature->location().longitude()/kCoordFactor_ << std::endl;
-    } else {
-      std::cout << "Found feature called " << feature->name()  << " at "
-                << feature->location().latitude()/kCoordFactor_ << ", "
-                << feature->location().longitude()/kCoordFactor_ << std::endl;
-    }
-    return true;
-  }
-  */
 };
 
 //string split functions below
@@ -132,7 +86,7 @@ vector<string> split(const string &s, char delim) {
 int main(int argc, char* argv[]) {
     
     string hostName = "localhost";
-    string portNumber = "16230";
+    string portNumber = "16231";
     
     if (argc >= 3) {
         hostName = argv[1];

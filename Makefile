@@ -23,10 +23,10 @@ vpath %.proto $(PROTOS_PATH)
 all: system-check fbc fbsd
 
 fbc: facebook.pb.o facebook.grpc.pb.o fbc.o 
-	$(CXX) $^ $(LDFLAGS) -o $@
+	$(CXX) $^ $(LDFLAGS) -g -o $@
 
 fbsd: facebook.pb.o facebook.grpc.pb.o fbsd.o 
-	$(CXX) $^ $(LDFLAGS) -o $@
+	$(CXX) $^ $(LDFLAGS) -g -o $@
 
 %.grpc.pb.cc: %.proto
 	$(PROTOC) -I $(PROTOS_PATH) --grpc_out=. --plugin=protoc-gen-grpc=$(GRPC_CPP_PLUGIN_PATH) $<
