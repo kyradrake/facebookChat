@@ -38,7 +38,7 @@ using namespace std;
 vector<UserData> listOfUsers; //global list of all the connected clients
 
 //send all of the users and their connected chat rooms back to the specified user
-void listCommand(string user){
+string listCommand(){
     string totalList = "";
     for(int i = 0; i < listOfUsers.size(); i++){
         totalList += "User: " + listOfUsers[i].name + "\n";
@@ -53,7 +53,7 @@ void listCommand(string user){
         totalList += "-------------------------------------------------------------\n";
     }
     
-    //send totalList back to the client somehow right here
+    return string;
 }
 
 //take a specified user and add another specified user to their list of connected users
@@ -79,7 +79,7 @@ void leaveCommand(string user, string userToLeave){
     //iterate through users to see if the current user exists
     for(int i = 0; i < listOfUsers.size(); i++){
         if(listOfUsers[i].name == user){
-            //user exists, check to see if the user 
+            //user exists, check to see if the user
             for(int j = 0; j < listOfUsers[i].usersConnectedTo.size(); j++){
                 if(listOfUsers[i].usersConnectedTo[j] == userToLeave) {
                     listOfUsers[i].usersConnectedTo.erase(listOfUsers[i].usersConnectedTo.begin()+j);
@@ -93,7 +93,7 @@ void leaveCommand(string user, string userToLeave){
 //takes the chat sent from the specified user and appends it to their chat database file
 void saveChatToFile(string user, string chat){
     ofstream outfile;
-
+    
     outfile.open(user+".txt", ios_base::app);
     outfile << chat;
 }
@@ -109,17 +109,61 @@ void chatCommand(string user, string chat){
     }
 }
 
+bool userExists(string user){
+    for(int i = 0; i < listOfUsers.size(); i++){
+        if(listOfUsers[i].name == user){
+            return true;
+        }
+    }
+    return false;
+}
 
-    
 class facebookServer final : public fbChatRoom::Service {
-    public:
+public:
     facebookServer() {}
     
-    // process client JOIN command
+    // process client Login command
+    Status Login(ServerContext* context, const LoginRequest* request,
+                 LoginReply* reply) override {
+        cout << "Server in Login function\n";
+        if(!userExists(request->name)){
+            UserData newUser = UserData(request->name());
+            listOfUserData.push_back(newUser);
+        }
+        reply->set_name("Welcome, " + request->name() + "\n");
+        return Status::OK;
+    }
+    
+    // process client Login command
+    Status List(ServerContext* context, const ListRequest* request,
+                ListReply* reply) override {
+        cout << "Server in List function\n";
+        reply->set_name(listCommand() + "\n");
+        return Status::OK;
+    }
+    
+    // process client Login command
+    Status Leave(ServerContext* context, const LeaveRequest* request,
+                 LeaveReply* reply) override {
+        cout << "Server in Leave function\n";
+        //join(request->name());
+        reply->set_name("Left Chat Room " + request->name() + "\n");
+        return Status::OK;
+    }
+    
+    // process client Join command
     Status Join(ServerContext* context, const JoinRequest* request,
-                     JoinReply* reply) override {
-        cout << "Server Context: " << context << endl;
-        reply->set_name("Joined Chat Room " + request->name());
+                JoinReply* reply) override {
+        cout << "Server in Join function\n";
+        //join(request->name());
+        reply->set_name("Joined Chat Room " + request->name() + "\n");
+        return Status::OK;
+    }
+    
+    // process client Chat command
+    Status Chat(ServerContext* context, const ChatRequest* request,
+                ChatReply* reply) override {
+        cout << "Server in Chat function\n";
         return Status::OK;
     }
 };
@@ -151,7 +195,7 @@ int main(int argc, char* argv[]) {
     if (argc >= 2) {
         portNumber = argv[1];
     }
-
+    
     startServer(portNumber);
     
     return 0;
