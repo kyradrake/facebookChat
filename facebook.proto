@@ -19,6 +19,10 @@ service fbChatRoom {
     rpc Leave(LeaveRequest) returns (LeaveReply) {}
     
     rpc Chat(ChatRequest) returns (ChatReply) {}
+    
+    rpc SendChatToServer(ChatMessage) returns (ChatReply) {}
+    
+    //rpc SendChatToClient 
 }
 
 
@@ -64,4 +68,8 @@ message ChatRequest {
 }
 message ChatReply {
     string reply = 1;
+}
+message ChatMessage {
+    string username = 1;
+    string message = 2;
 }
