@@ -36,7 +36,16 @@ using facebookChat::ChatReply;
 using namespace std;
  
 vector<UserData> listOfUsers; //global list of all the connected clients
- 
+
+bool userExists(string user){
+    for(int i = 0; i < listOfUsers.size(); i++){
+        if(listOfUsers[i].name == user){
+            return true;
+        }
+    }
+    return false;
+}
+
 //send all of the users and their connected chat rooms back to the specified user
 string listCommand(){
     string totalList = "";
@@ -58,17 +67,22 @@ string listCommand(){
  
 //take a specified user and add another specified user to their list of connected users
 string joinCommand(string user, string userToJoin){
+    if(!userExists(userToJoin)){
+        string rValue = "ERROR: " + userToJoin + " does not exist\n";
+        return rValue;
+    }
     for(int i = 0; i < listOfUsers.size(); i++){
-        if(listOfUsers[i].name == userToJoin){
+        if(listOfUsers[i].name == user){
             bool exists = false;
             for(int j = 0; j < listOfUsers[i].usersConnectedTo.size(); j++){
-                if(listOfUsers[i].usersConnectedTo[j] == user) {
+                if(listOfUsers[i].usersConnectedTo[j] == userToJoin) {
                     exists = true;
                 }
             }
             if(!exists){
-                listOfUsers[i].usersConnectedTo.push_back(user);
-                string rVal = "Added " + user + " to " + userToJoin + " successfully\n";
+                listOfUsers[i].usersConnectedTo.push_back(userToJoin);
+                string rValue = "Added " + user + " to " + userToJoin + " successfully\n";
+                return rValue;
             }
         }
     }
@@ -78,6 +92,10 @@ string joinCommand(string user, string userToJoin){
  
 //take a specified user and remove another specified user from their list of connected users
 string leaveCommand(string user, string userToLeave){
+    if(!userExists(userToLeave)){
+        string rValue = "ERROR: " + userToLeave + " does not exist\n";
+        return rValue;
+    }
     //iterate through users to see if the current user exists
     for(int i = 0; i < listOfUsers.size(); i++){
         if(listOfUsers[i].name == user){
@@ -119,15 +137,6 @@ void lastTwentyChats(string user){
    
 }
  
-bool userExists(string user){
-    for(int i = 0; i < listOfUsers.size(); i++){
-        if(listOfUsers[i].name == user){
-            return true;
-        }
-    }
-    return false;
-}
- 
 class facebookServer final : public fbChatRoom::Service {
 public:
     facebookServer() {}
@@ -144,7 +153,7 @@ public:
         return Status::OK;
     }
    
-    // process client Login command
+    // process client List command
     Status List(ServerContext* context, const ListRequest* request,
                 ListReply* reply) override {
         cout << "Server in List function\n";
@@ -152,7 +161,7 @@ public:
         return Status::OK;
     }
    
-    // process client Login command
+    // process client Leave command
     Status Leave(ServerContext* context, const LeaveRequest* request,
                  LeaveReply* reply) override {
         cout << "Server in Leave function\n";
