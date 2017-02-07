@@ -41,7 +41,7 @@ class facebookClient {
     
     public:
     
-    facebookClient(string address, string username) {
+    facebookClient(string address, string uname) {
         // create a new channel to server
         shared_ptr<Channel> channel = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
         
@@ -51,7 +51,7 @@ class facebookClient {
         stub = fbChatRoom::NewStub(channel);
         
         // set client's username
-        username = username;
+        username = uname;
     }
     
     void login() {
@@ -62,6 +62,8 @@ class facebookClient {
         // set request username
         request.set_username(username);
         
+        cout << "in login: " << request.username() << endl;
+        
         // send login request to server
         ClientContext context;
         Status status = stub->Login(&context, request, &reply);
@@ -70,7 +72,7 @@ class facebookClient {
         if (!status.ok()) {
             cout << "Error Occured: Server Cannot Login.\n";
         }
-        /*else if (!reply.has_name()) { 
+        /*else if (!reply.has_reply()) { 
             cout << "Error Occured: Server Returned Incomplete Data.\n";
         }*/
         else {

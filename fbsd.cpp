@@ -126,7 +126,11 @@ public:
     Status Login(ServerContext* context, const LoginRequest* request,
                  LoginReply* reply) override {
         cout << "Server in Login function\n";
+        const string& username = request->username();
+        cout << "attempt at username: " << username << endl;
         if(!userExists(request->username())){
+            cout << "In if\n";
+            cout << "Username is: " << request->username() << endl;
             UserData newUser = UserData(request->username());
             listOfUsers.push_back(newUser);
         }
