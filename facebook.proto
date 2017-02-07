@@ -22,7 +22,7 @@ service fbChatRoom {
     
     rpc SendChatToServer(ChatMessage) returns (ChatReply) {}
     
-    //rpc SendChatToClient 
+    //rpc SendChatToClient(ChatMessage) returns (ChatReply) {}
 }
 
 
@@ -71,5 +71,6 @@ message ChatReply {
 }
 message ChatMessage {
     string username = 1;
-    string message = 2;
+    string datetime = 2;
+    string message = 3;
 }

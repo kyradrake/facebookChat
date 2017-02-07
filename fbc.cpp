@@ -3,6 +3,9 @@
 // Facebook Chat Room Client
 // Colin Banigan and Katherine Drake
 
+#include <iostream>
+#include <iomanip>
+#include <ctime>
 #include <sstream>
 
 #include <grpc/grpc.h>
@@ -28,11 +31,29 @@ using facebookChat::JoinReply;
 using facebookChat::LeaveRequest;
 using facebookChat::LeaveReply;
 using facebookChat::ChatRequest;
+using facebookChat::ChatMessage;
 using facebookChat::ChatReply;
 
 using namespace std;
 
-bool chatMode = false; //client starts in commandMode
+bool inChatMode = false; //client starts in commandMode
+
+// returns current date and time in a string
+// time format: DD-MM-YYYY HH:MM:SS
+string getDateAndTime() {
+    // get current date and time
+    time_t t = time(nullptr);
+    struct tm* time = localtime(&t);
+
+    // convert time to char[]
+    char buffer[100];
+    strftime(buffer,100,"%d-%m-%Y-%H:%M:%S",time);
+    
+    // convert time into a string
+    string dateAndTime(buffer);
+  
+    return dateAndTime;
+}
 
 class facebookClient {
     private: 
@@ -72,9 +93,6 @@ class facebookClient {
         if (!status.ok()) {
             cout << "Error Occured: Server Cannot Login.\n";
         }
-        /*else if (!reply.has_reply()) { 
-            cout << "Error Occured: Server Returned Incomplete Data.\n";
-        }*/
         else {
             // print server's reply
             cout << reply.reply();
@@ -97,9 +115,6 @@ class facebookClient {
         if (!status.ok()) {
             cout << "Error Occured: Server Cannot List Users.\n";
         }
-        /*else if (!reply.has_name()) { 
-            cout << "Error Occured: Server Returned Incomplete Data.\n";
-        }*/
         else {
             // print server's reply
             cout << reply.reply();
@@ -123,9 +138,6 @@ class facebookClient {
         if (!status.ok()) {
             cout << "Error Occured: Server Cannot Join Chat Room.\n";
         }
-        /*else if (!reply.has_name()) { 
-            cout << "Error Occured: Server Returned Incomplete Data.\n";
-        }*/
         else {
             // print server's reply
             cout << reply.reply();
@@ -149,9 +161,6 @@ class facebookClient {
         if (!status.ok()) {
             cout << "Error Occured: Server Cannot Leave Chat Room.\n";
         }
-        /*else if (!reply.has_name()) { 
-            cout << "Error Occured: Server Returned Incomplete Data.\n";
-        }*/
         else {
             // print server's reply
             cout << reply.reply();
@@ -174,16 +183,39 @@ class facebookClient {
         if (!status.ok()) {
             cout << "Error Occured: Server Cannot Initiate Chat.\n";
         }
-        /*else if (!reply.has_name()) { 
-            cout << "Error Occured: Server Returned Incomplete Data.\n";
-        }*/
         else {
             // print server's reply
             cout << reply.reply();
             
             // change from command mode to chat mode
-            chatMode = true;
+            inChatMode = true;
         }
+    }
+    
+    void sendChat(string message, string time) {
+        //SendChatToServer(ChatMessage) returns (ChatReply) {}
+        
+        // create chat message and reply objects
+        ChatMessage chatMessage;
+        ChatReply reply;
+        
+        // set request username
+        /*request.set_username(username);
+        
+        cout << "in login: " << request.username() << endl;
+        
+        // send login request to server
+        ClientContext context;
+        Status status = stub->Login(&context, request, &reply);
+        
+        // check if request was successful
+        if (!status.ok()) {
+            cout << "Error Occured: Server Cannot Login.\n";
+        }
+        else {
+            // print server's reply
+            cout << reply.reply();
+        }*/
     }
 };
 
@@ -228,6 +260,20 @@ void commandMode(facebookClient* client) {
     }
 }
 
+void chatMode(facebookClient* client) {
+    // wait for message via command line
+    string chatMessage;
+    getline(cin, chatMessage);
+    
+    // get current date and time
+    string time = getDateAndTime();
+    
+    cout << "Time: " << time << endl;
+    
+    // send chat message to server
+    client->sendChat(chatMessage, time);
+}
+
 int main(int argc, char* argv[]) {
     
     string hostName = "localhost";
@@ -249,9 +295,12 @@ int main(int argc, char* argv[]) {
     
     client.login();
     
-    while (!chatMode) {
+    while (!inChatMode) {
         commandMode(&client);
     }
     
+    while (true) {
+        chatMode(&client);
+    }
     return 0;
 }
