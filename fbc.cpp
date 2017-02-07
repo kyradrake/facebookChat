@@ -39,28 +39,28 @@ using namespace std;
 bool inChatMode = false; //client starts in commandMode
 
 // returns current date and time in a string
-// time format: DD-MM-YYYY HH:MM:SS
+// time format: DD-MM-YYYY-HH:MM:SS
 string getDateAndTime() {
     // get current date and time
     time_t t = time(nullptr);
     struct tm* time = localtime(&t);
-
+    
     // convert time to char[]
     char buffer[100];
     strftime(buffer,100,"%d-%m-%Y-%H:%M:%S",time);
     
     // convert time into a string
     string dateAndTime(buffer);
-  
+    
     return dateAndTime;
 }
 
 class facebookClient {
-    private: 
+private:
     unique_ptr<fbChatRoom::Stub> stub;
     string username;
     
-    public:
+public:
     
     facebookClient(string address, string uname) {
         // create a new channel to server
@@ -82,8 +82,6 @@ class facebookClient {
         
         // set request username
         request.set_username(username);
-        
-        cout << "in login: " << request.username() << endl;
         
         // send login request to server
         ClientContext context;
@@ -120,7 +118,7 @@ class facebookClient {
             cout << reply.reply();
         }
     }
-        
+    
     void join(string chatRoom) {
         // create join request and reply objects
         JoinRequest request;
@@ -192,47 +190,43 @@ class facebookClient {
         }
     }
     
-    void sendChat(string message, string time) {
+    void sendChat(string message, string dateAndTime) {
         //SendChatToServer(ChatMessage) returns (ChatReply) {}
         
         // create chat message and reply objects
         ChatMessage chatMessage;
         ChatReply reply;
         
-        // set request username
-        /*request.set_username(username);
+        // set message username, time and date, and message
+        chatMessage.set_username(username);
+        chatMessage.set_datetime(dateAndTime);
+        chatMessage.set_message(message);
         
-        cout << "in login: " << request.username() << endl;
-        
-        // send login request to server
+        // send chat message to server
         ClientContext context;
-        Status status = stub->Login(&context, request, &reply);
+        Status status = stub->SendChatToServer(&context, chatMessage, &reply);
         
         // check if request was successful
         if (!status.ok()) {
-            cout << "Error Occured: Server Cannot Login.\n";
+            cout << "Error Occured: Message Could Not Send to Server.\n";
         }
-        else {
-            // print server's reply
-            cout << reply.reply();
-        }*/
     }
 };
 
 //string split functions below
 void split(const string &s, char delim, vector<string> &elems) {
-	stringstream ss;
-	ss.str(s);
-	string item;
-	while (getline(ss, item, delim)) {
-		elems.push_back(item);
-	}
+    stringstream ss;
+    ss.str(s);
+    string item;
+    while (getline(ss, item, delim)) {
+        elems.push_back(item);
+    }
 }
 
 vector<string> split(const string &s, char delim) {
-	vector<string> elems;
-	split(s, delim, elems);
-	return elems;
+    vector<string> elems;
+    split(s, delim, elems);
+    return elems;
 }
 
 void commandMode(facebookClient* client) {
@@ -240,7 +234,7 @@ void commandMode(facebookClient* client) {
     getline(cin, command);
     
     vector<string> splitCommand = split(command, ' ');
-
+    
     if (command.compare(0, 4, "LIST") == 0) {
         client->list();
     }
