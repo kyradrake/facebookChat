@@ -6,6 +6,8 @@
 #include <fstream>
 #include <iostream>
 #include "UserData.h"
+#include <sstream>
+#include <string>
  
 #include <grpc/grpc.h>
 #include <grpc++/server.h>
@@ -44,6 +46,22 @@ bool userExists(string user){
         }
     }
     return false;
+}
+
+//string split functions below
+void split(const string &s, char delim, vector<string> &elems) {
+	stringstream ss;
+	ss.str(s);
+	string item;
+	while (getline(ss, item, delim)) {
+		elems.push_back(item);
+	}
+}
+
+vector<string> split(const string &s, char delim) {
+	vector<string> elems;
+	split(s, delim, elems);
+	return elems;
 }
 
 //send all of the users and their connected chat rooms back to the specified user
@@ -122,7 +140,7 @@ void saveChatToFile(string chat){
 }
  
 void chatSend(string user, string chat, string time){
-    string formatted = "<" + user + ">[" + time + "]: " + chat;
+    string formatted = user + "|" + time + "|" + chat;
     saveChatToFile(formatted);
     for(int i = 0; i < listOfUsers.size(); i++){
         for(int j = 0; listOfUsers[i].usersConnectedTo.size(); j++){
@@ -132,9 +150,72 @@ void chatSend(string user, string chat, string time){
         }
     }
 }
+
+vector<string> readInUserChats(string user){
+    string line;
+	ifstream inputFile;
+    vector<string> rValue;
+    
+    inputFile.open("chathistory.txt");
+
+	while (getline(inputFile, line)) {
+        //formatted in user, time, chat
+        vector<string> formatted = split(line, '|');
+		if (user == formatted[0]) {
+            rValue.push_back(line);
+        }
+    }
+    return rValue;
+}
+
+// return true if the date string at lhs is earlier than rhs
+bool compareDates(string lhs, string rhs){
+    vector<string> getDateLHS = split(lhs, '|');
+    vector<string> getDateRHS = split(rhs, '|');
+    vector<string> fLHS = split(getDateLHS[1], '-');
+    vector<string> fRHS = split(getDateRHS[1], '-');
+    if(stoi(fLHS[2]) < stoi(fRHS[2])){ //check year
+        return true;
+    }
+    if(stoi(fLHS[1]) < stoi(fRHS[1])){ //check month
+        return true;
+    }
+    if(stoi(fLHS[0]) < stoi(fRHS[0])){ //check day
+        return true;
+    }
+    if(stoi(fLHS[3]) < stoi(fRHS[3])){ //check hour
+        return true;
+    }
+    if(stoi(fLHS[4]) < stoi(fRHS[4])){ //check minute
+        return true;
+    }
+    if(stoi(fLHS[5]) < stoi(fRHS[5])){ //check second
+        return true;
+    }
+    return false;
+}
  
-void lastTwentyChats(string user){
-   
+string lastTwentyChats(string user){
+    string rValue;
+    int userIndex = -1;
+    for(int i = 0; i < listOfUsers.size(); i++){
+        if(listOfUsers[i].name == user){
+            userIndex = i;
+        }
+    }
+    vector<string> totalRelevantChats;
+    for(int i = 0; i < listOfUsers[userIndex].usersConnectedTo.size(); i++){
+        vector<string> usersChats = readInUserChats(listOfUsers[userIndex].usersConnectedTo[i]);
+        for(int j = 0; j < usersChats.size(); j++){
+            totalRelevantChats.push_back(usersChats[j]);
+        }
+    }
+    sort(totalRelevantChats.begin(), totalRelevantChats.end(), compareDates);
+    for(int i = 0; i < totalRelevantChats.size() && i < 20; i++){
+        vector<string> formatted = split(totalRelevantChats[i], '|');
+        rValue += "[" + formatted[1] + "]<" + formatted[0] + "> " + formatted[2] + "\n";
+    }
+    return rValue;
 }
  
 class facebookServer final : public fbChatRoom::Service {
@@ -181,7 +262,7 @@ public:
     Status Chat(ServerContext* context, const ChatRequest* request,
                 ChatReply* reply) override {
         cout << "Server in Chat function\n";
-        //chatCommand()
+        reply->set_reply(lastTwentyChats(request->username()));
         return Status::OK;
     }
 };
