@@ -53,7 +53,7 @@ string listCommand(){
         totalList += "-------------------------------------------------------------\n";
     }
     
-    return string;
+    return totalList;
 }
 
 //take a specified user and add another specified user to their list of connected users
@@ -126,11 +126,11 @@ public:
     Status Login(ServerContext* context, const LoginRequest* request,
                  LoginReply* reply) override {
         cout << "Server in Login function\n";
-        if(!userExists(request->name)){
-            UserData newUser = UserData(request->name());
-            listOfUserData.push_back(newUser);
+        if(!userExists(request->username())){
+            UserData newUser = UserData(request->username());
+            listOfUsers.push_back(newUser);
         }
-        reply->set_name("Welcome, " + request->name() + "\n");
+        reply->set_reply("Welcome, " + request->username() + "\n");
         return Status::OK;
     }
     
@@ -138,7 +138,7 @@ public:
     Status List(ServerContext* context, const ListRequest* request,
                 ListReply* reply) override {
         cout << "Server in List function\n";
-        reply->set_name(listCommand() + "\n");
+        reply->set_reply(listCommand() + "\n");
         return Status::OK;
     }
     
@@ -146,8 +146,8 @@ public:
     Status Leave(ServerContext* context, const LeaveRequest* request,
                  LeaveReply* reply) override {
         cout << "Server in Leave function\n";
-        //join(request->name());
-        reply->set_name("Left Chat Room " + request->name() + "\n");
+        leaveCommand(request->username(), request->chatroom());
+        reply->set_reply("Left Chat Room " + request->username() + "\n");
         return Status::OK;
     }
     
@@ -155,8 +155,8 @@ public:
     Status Join(ServerContext* context, const JoinRequest* request,
                 JoinReply* reply) override {
         cout << "Server in Join function\n";
-        //join(request->name());
-        reply->set_name("Joined Chat Room " + request->name() + "\n");
+        joinCommand(request->username(), request->chatroom());
+        reply->set_reply("Joined Chat Room " + request->username() + "\n");
         return Status::OK;
     }
     

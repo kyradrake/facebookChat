@@ -43,7 +43,7 @@ message ListReply {
 // Join Messages
 message JoinRequest {
     string username = 1;
-    string chatRoom = 2;
+    string chatroom = 2;
 }
 message JoinReply {
     string reply = 1;
@@ -52,7 +52,7 @@ message JoinReply {
 // Leave Messages
 message LeaveRequest {
     string username = 1;
-    string chatRoom = 2;
+    string chatroom = 2;
 }
 message LeaveReply {
     string reply = 1;

@@ -47,8 +47,10 @@ class facebookClient {
         
         cout << "Client is connected on " << address << endl;
         
+        // generate stub
         stub = fbChatRoom::NewStub(channel);
         
+        // set client's username
         username = username;
     }
     
@@ -83,7 +85,7 @@ class facebookClient {
         ListReply reply;
         
         // set request username
-        request.set_username();
+        request.set_username(username);
         
         // send list request to server
         ClientContext context;
@@ -109,7 +111,7 @@ class facebookClient {
         
         // set request username and chat room to join
         request.set_username(username);
-        request.set_chatRoom(chatRoom);
+        request.set_chatroom(chatRoom);
         
         // send join request to server
         ClientContext context;
@@ -135,7 +137,7 @@ class facebookClient {
         
         // set request username and chat room to leave
         request.set_username(username);
-        request.set_chatRoom(chatRoom);
+        request.set_chatroom(chatRoom);
         
         // send leave request to server
         ClientContext context;
@@ -150,7 +152,7 @@ class facebookClient {
         }*/
         else {
             // print server's reply
-            cout << reply.name();
+            cout << reply.reply();
         }
     }
     
