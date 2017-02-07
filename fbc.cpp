@@ -37,25 +37,28 @@ bool chatMode = false; //client starts in commandMode
 class facebookClient {
     private: 
     unique_ptr<fbChatRoom::Stub> stub;
+    string username;
     
     public:
     
-    facebookClient(string address) {
+    facebookClient(string address, string username) {
         // create a new channel to server
         shared_ptr<Channel> channel = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
         
         cout << "Client is connected on " << address << endl;
         
         stub = fbChatRoom::NewStub(channel);
+        
+        username = username;
     }
     
-    void login(string username) {
+    void login() {
         // create login request and reply objects
         LoginRequest request;
         LoginReply reply;
         
-        // set request name to user's username
-        request.set_name(username);
+        // set request username
+        request.set_username(username);
         
         // send login request to server
         ClientContext context;
@@ -69,7 +72,8 @@ class facebookClient {
             cout << "Error Occured: Server Returned Incomplete Data.\n";
         }*/
         else {
-            cout << reply.name();
+            // print server's reply
+            cout << reply.reply();
         }
     }
     
@@ -78,8 +82,8 @@ class facebookClient {
         ListRequest request;
         ListReply reply;
         
-        // set request name to empty string
-        request.set_name("");
+        // set request username
+        request.set_username();
         
         // send list request to server
         ClientContext context;
@@ -93,7 +97,8 @@ class facebookClient {
             cout << "Error Occured: Server Returned Incomplete Data.\n";
         }*/
         else {
-            cout << reply.name();
+            // print server's reply
+            cout << reply.reply();
         }
     }
         
@@ -102,8 +107,9 @@ class facebookClient {
         JoinRequest request;
         JoinReply reply;
         
-        // set request name to chat room to join
-        request.set_name(chatRoom);
+        // set request username and chat room to join
+        request.set_username(username);
+        request.set_chatRoom(chatRoom);
         
         // send join request to server
         ClientContext context;
@@ -117,7 +123,8 @@ class facebookClient {
             cout << "Error Occured: Server Returned Incomplete Data.\n";
         }*/
         else {
-            cout << reply.name();
+            // print server's reply
+            cout << reply.reply();
         }
     }
     
@@ -126,8 +133,9 @@ class facebookClient {
         LeaveRequest request;
         LeaveReply reply;
         
-        // set request name to chat room to leave
-        request.set_name(chatRoom);
+        // set request username and chat room to leave
+        request.set_username(username);
+        request.set_chatRoom(chatRoom);
         
         // send leave request to server
         ClientContext context;
@@ -141,6 +149,7 @@ class facebookClient {
             cout << "Error Occured: Server Returned Incomplete Data.\n";
         }*/
         else {
+            // print server's reply
             cout << reply.name();
         }
     }
@@ -150,8 +159,8 @@ class facebookClient {
         ChatRequest request;
         ChatReply reply;
         
-        // set request name to empty string
-        request.set_name("");
+        // set request username
+        request.set_username(username);
         
         // send chat request to server
         ClientContext context;
@@ -165,7 +174,10 @@ class facebookClient {
             cout << "Error Occured: Server Returned Incomplete Data.\n";
         }*/
         else {
-            cout << reply.name();
+            // print server's reply
+            cout << reply.reply();
+            
+            // change from command mode to chat mode
             chatMode = true;
         }
     }
@@ -229,9 +241,9 @@ int main(int argc, char* argv[]) {
     }
     
     // create facebook chat client
-    facebookClient client(hostName + ":" + portNumber);
+    facebookClient client(hostName + ":" + portNumber, username);
     
-    client.login(username);
+    client.login();
     
     while (!chatMode) {
         commandMode(&client);
