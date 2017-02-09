@@ -117,10 +117,10 @@ void saveChatToFile(string chat){
     ofstream outfile;
    
     outfile.open("chathistory.txt", ios_base::app);
-    outfile << chat << endl;
+    outfile << chat;
 }
  
-void chatSend(string user, string chat, string time){
+string chatSend(string user, string chat, string time){
     string formatted = user + "|" + time + "|" + chat;
     saveChatToFile(formatted);
     int counter = 0;
@@ -132,6 +132,8 @@ void chatSend(string user, string chat, string time){
             }
         }
     }
+    string rValue = "Sent out message to " + to_string(counter) + " relevant chats\n";
+    return rValue;
 }
 
 vector<string> readInUserChats(string user){
@@ -151,31 +153,23 @@ vector<string> readInUserChats(string user){
     return rValue;
 }
  
-//parses the text file for the 20 most recent chat messages
 string lastTwentyChats(string user){
-    string rValue;
-    
-    //find the index of the user specified in listOfUsers
+    string rValue = "";
     int userIndex = -1;
     for(int i = 0; i < listOfUsers.size(); i++){
         if(listOfUsers[i].name == user){
             userIndex = i;
         }
     }
-    
-    //parse the text file for messages from the clients the user is subscribed code
     vector<string> totalRelevantChats;
     for(int i = 0; i < listOfUsers[userIndex].usersConnectedTo.size(); i++){
         vector<string> usersChats = readInUserChats(listOfUsers[userIndex].usersConnectedTo[i]);
+        
         for(int j = 0; j < usersChats.size(); j++){
             totalRelevantChats.push_back(usersChats[j]);
         }
     }
-    
-    //sort the messages retrieved by most recent
     sort(totalRelevantChats.begin(), totalRelevantChats.end(), compareDates);
-    
-    //return the 20 most recent chat messages
     for(int i = 0; i < totalRelevantChats.size() && i < 20; i++){
         vector<string> formatted = split(totalRelevantChats[i], '|');
         rValue += "[" + formatted[1] + "]<" + formatted[0] + "> " + formatted[2] + "\n";
@@ -236,24 +230,21 @@ public:
         
         cout << "Server in ChatStream function\n";
         
-        thread reader([stream]() {
-            ChatMessage msg;
-            while (stream->Read(&msg)) {
-                cout << "Message Received: " << msg.message() << "\n\n";
-
-                ChatMessage reply;
-                string time = getDateAndTime();
-
-                chatSend(msg.username(), msg.message(), time);
-
-                reply.set_username(msg.username());
-                reply.set_message(msg.message());
-                reply.set_datetime(time);
-
-                stream->Write(reply);
-            } 
-        });
+        ChatMessage msg;
+        while (stream->Read(&msg)) {
+            cout << "Message Received: " << msg.message() << "\n\n";
+            
+            ChatMessage reply;
+            //reply->set_reply(chatSend(stream->username(), stream->message(), stream->datetime()));
+            
+            reply.set_username("Server");
+            reply.set_message("Success");
+            
+            stream->Write(reply);
+        }
+        
         return Status::OK;
+
     }
 };
  
