@@ -2,7 +2,7 @@ HOST_SYSTEM = $(shell uname | cut -f 1 -d_)
 SYSTEM ?= $(HOST_SYSTEM)
 CXX = g++
 CPPFLAGS += -I/usr/local/include -pthread
-CXXFLAGS += -std=c++11
+CXXFLAGS += -std=c++11 -g
 ifeq ($(SYSTEM),Darwin)
 LDFLAGS += -L/usr/local/lib `pkg-config --libs grpc++`            \
            -lgrpc++_reflection \

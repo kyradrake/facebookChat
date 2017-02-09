@@ -117,9 +117,11 @@ void saveChatToFile(string chat){
     ofstream outfile;
    
     outfile.open("chathistory.txt", ios_base::app);
-    outfile << chat;
+    outfile << chat << endl;
 }
  
+
+/*
 string chatSend(string user, string chat, string time){
     string formatted = user + "|" + time + "|" + chat;
     saveChatToFile(formatted);
@@ -135,6 +137,7 @@ string chatSend(string user, string chat, string time){
     string rValue = "Sent out message to " + to_string(counter) + " relevant chats\n";
     return rValue;
 }
+*/
 
 vector<string> readInUserChats(string user){
     string line;
@@ -260,27 +263,25 @@ public:
     Status Chat(ServerContext* context, const ChatRequest* request,
                 ChatReply* reply) override {
         cout << "Server in Chat function\n";
-        reply->set_reply(lastTwentyChats(request->username()));
+        //reply->set_reply(lastTwentyChats(request->username()));
         return Status::OK;
     }
     
     //process client ChatStream command
     Status ChatStream(ServerContext* context, ServerReaderWriter<ChatMessage, ChatMessage>* stream) override {
-        
-        cout << "Server in ChatStream function\n";
-        
         static string clientUsername = "";
         
         thread reader([stream]() {
-            cout << "Hereeeee\n";
             ChatMessage msg;
             while (stream->Read(&msg)) {
                 cout << "Message Received: " << msg.message() << "\n\n";
 
-                ChatMessage reply;
-                //reply->set_reply(chatSend(stream->username(), stream->message(), stream->datetime()));
+                string time = getDateAndTime();
                 
-                string formatedMessage = "[" + msg.datetime() + "]<" + msg.username() + 
+                string dataForTextFile = msg.username() + "|" + time + "|" + msg.message();
+                saveChatToFile(dataForTextFile);
+                
+                string formatedMessage = "[" + time + "]<" + msg.username() + 
                     "> " + msg.message() + "\n";
                 
                 clientUsername = msg.username();
@@ -294,13 +295,6 @@ public:
                         }
                     }
                 }
-                /*
-                reply.set_username(msg.username());
-                reply.set_datetime("");
-                reply.set_message(msg.message());
-
-                stream->Write(reply);
-                */
             }
         });
         
