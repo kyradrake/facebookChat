@@ -40,6 +40,23 @@ using namespace std;
  
 vector<UserData> listOfUsers; //global list of all the connected clients
 
+// returns current date and time in a string
+// time format: DD-MM-YYYY-HH:MM:SS
+string getDateAndTime() {
+    // get current date and time
+    time_t t = time(nullptr);
+    struct tm* time = localtime(&t);
+    
+    // convert time to char[]
+    char buffer[100];
+    strftime(buffer,100,"%d-%m-%Y-%H:%M:%S",time);
+    
+    // convert time into a string
+    string dateAndTime(buffer);
+    
+    return dateAndTime;
+}
+
 bool userExists(string user){
     for(int i = 0; i < listOfUsers.size(); i++){
         if(listOfUsers[i].name == user){
@@ -137,10 +154,10 @@ void saveChatToFile(string chat){
     ofstream outfile;
    
     outfile.open("chathistory.txt", ios_base::app);
-    outfile << chat;
+    outfile << chat << endl;
 }
  
-string chatSend(string user, string chat, string time){
+void chatSend(string user, string chat, string time){
     string formatted = user + "|" + time + "|" + chat;
     saveChatToFile(formatted);
     int counter = 0;
@@ -152,8 +169,6 @@ string chatSend(string user, string chat, string time){
             }
         }
     }
-    string rValue = "Sent out message to " + to_string(counter) + " relevant chats\n";
-    return rValue;
 }
 
 vector<string> readInUserChats(string user){
@@ -200,23 +215,31 @@ bool compareDates(string lhs, string rhs){
     return false;
 }
  
+//parses the text file for the 20 most recent chat messages
 string lastTwentyChats(string user){
-    string rValue = "";
+    string rValue;
+    
+    //find the index of the user specified in listOfUsers
     int userIndex = -1;
     for(int i = 0; i < listOfUsers.size(); i++){
         if(listOfUsers[i].name == user){
             userIndex = i;
         }
     }
+    
+    //parse the text file for messages from the clients the user is subscribed code
     vector<string> totalRelevantChats;
     for(int i = 0; i < listOfUsers[userIndex].usersConnectedTo.size(); i++){
         vector<string> usersChats = readInUserChats(listOfUsers[userIndex].usersConnectedTo[i]);
-        
         for(int j = 0; j < usersChats.size(); j++){
             totalRelevantChats.push_back(usersChats[j]);
         }
     }
+    
+    //sort the messages retrieved by most recent
     sort(totalRelevantChats.begin(), totalRelevantChats.end(), compareDates);
+    
+    //return the 20 most recent chat messages
     for(int i = 0; i < totalRelevantChats.size() && i < 20; i++){
         vector<string> formatted = split(totalRelevantChats[i], '|');
         rValue += "[" + formatted[1] + "]<" + formatted[0] + "> " + formatted[2] + "\n";
@@ -277,21 +300,24 @@ public:
         
         cout << "Server in ChatStream function\n";
         
-        ChatMessage msg;
-        while (stream->Read(&msg)) {
-            cout << "Message Received: " << msg.message() << "\n\n";
-            
-            ChatMessage reply;
-            //reply->set_reply(chatSend(stream->username(), stream->message(), stream->datetime()));
-            
-            reply.set_username("Server");
-            reply.set_message("Success");
-            
-            stream->Write(reply);
-        }
-        
-        return Status::OK;
+        thread reader([stream]() {
+            ChatMessage msg;
+            while (stream->Read(&msg)) {
+                cout << "Message Received: " << msg.message() << "\n\n";
 
+                ChatMessage reply;
+                string time = getDateAndTime();
+
+                chatSend(msg.username(), msg.message(), time);
+
+                reply.set_username(msg.username());
+                reply.set_message(msg.message());
+                reply.set_datetime(time);
+
+                stream->Write(reply);
+            } 
+        });
+        return Status::OK;
     }
 };
  
