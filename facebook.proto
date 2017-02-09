@@ -20,7 +20,7 @@ service fbChatRoom {
     
     rpc Chat(ChatRequest) returns (ChatReply) {}
     
-    rpc SendChatToServer(ChatMessage) returns (ChatReply) {}
+    rpc ChatStream(stream ChatMessage) returns (stream ChatMessage) {}
     
     //rpc SendChatToClient(ChatMessage) returns (ChatReply) {}
 }
