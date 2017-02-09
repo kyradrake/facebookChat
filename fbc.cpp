@@ -7,6 +7,7 @@
 #include <iomanip>
 #include <ctime>
 #include <sstream>
+#include <thread>
 
 #include <grpc/grpc.h>
 #include <grpc++/channel.h>
@@ -190,9 +191,10 @@ public:
         }
     }
     
-    void sendChat(string message, string dateAndTime) {
+    void sendChat() {           //string message, string dateAndTime
         //SendChatToServer(ChatMessage) returns (ChatReply) {}
-        
+        //ClientContext context;
+        /*
         // create chat message and reply objects
         ChatMessage chatMessage;
         ChatReply reply;
@@ -210,6 +212,100 @@ public:
         if (!status.ok()) {
             cout << "Error Occured: Message Could Not Send to Server.\n";
         }
+        
+        */
+        /*
+        shared_ptr<ClientReaderWriter<ChatMessage, ChatMessage>> chatStream(stub->ChatStream(&context));
+        
+        static string name = username;
+        
+        thread chatSendThread([chatStream]() {
+            ChatMessage chatMessage;
+            string msg;
+            
+            getline(cin, msg);
+            chatMessage.set_username(name);
+            chatMessage.set_message(msg);
+            
+            chatStream->Write(chatMessage);
+        });
+        */
+        
+        ClientContext context;
+
+        shared_ptr<ClientReaderWriter<ChatMessage, ChatMessage> > stream(
+            stub->ChatStream(&context));
+
+        thread writer([stream]() {
+            /*vector<ChatMessage> notes{
+                MakeRouteNote("First message", 0, 0),
+                MakeRouteNote("Second message", 0, 1),
+                MakeRouteNote("Third message", 1, 0),
+                MakeRouteNote("Fourth message", 0, 0)};
+                */
+            /*for (const RouteNote& note : notes) {
+                std::cout << "Sending message " << note.message()
+                          << " at " << note.location().latitude() << ", "
+                          << note.location().longitude() << std::endl;
+                stream->Write(note);
+            }*/
+            ChatMessage msg;
+            msg.set_username("test");
+            msg.set_message("pls work");
+            msg.set_datetime("ft");
+            stream->Write(msg);
+            
+            //stream->WritesDone();
+        });
+
+        ChatMessage serverMsg;
+        while (stream->Read(&serverMsg)) {
+          cout << "Got message " << serverMsg.message() << endl;
+                    //<< " at " << server_note.location().latitude() << ", "
+                    //<< server_note.location().longitude() << std::endl;
+        }
+        stream->WritesDone();
+        writer.join();
+        Status status = stream->Finish();
+        if (!status.ok()) {
+          std::cout << "RouteChat rpc failed." << std::endl;
+        }
+        
+        
+/*            
+        std::shared_ptr<ClientReaderWriter<RouteNote, RouteNote> > stream(
+        stub_->RouteChat(&context));
+
+    std::thread writer([stream]() {
+      std::vector<RouteNote> notes{
+        MakeRouteNote("First message", 0, 0),
+        MakeRouteNote("Second message", 0, 1),
+        MakeRouteNote("Third message", 1, 0),
+        MakeRouteNote("Fourth message", 0, 0)};
+      for (const RouteNote& note : notes) {
+        std::cout << "Sending message " << note.message()
+                  << " at " << note.location().latitude() << ", "
+                  << note.location().longitude() << std::endl;
+        stream->Write(note);
+      }
+      stream->WritesDone();
+    });
+
+    RouteNote server_note;
+    while (stream->Read(&server_note)) {
+      std::cout << "Got message " << server_note.message()
+                << " at " << server_note.location().latitude() << ", "
+                << server_note.location().longitude() << std::endl;
+    }
+    writer.join();
+    Status status = stream->Finish();
+    if (!status.ok()) {
+      std::cout << "RouteChat rpc failed." << std::endl;
+    }
+        
+        */
+        
+        
     }
 };
 
@@ -254,6 +350,7 @@ void commandMode(facebookClient* client) {
     }
 }
 
+/*
 void chatMode(facebookClient* client) {
     // wait for message via command line
     string chatMessage;
@@ -267,6 +364,41 @@ void chatMode(facebookClient* client) {
     // send chat message to server
     client->sendChat(chatMessage, time);
 }
+*/
+/*
+void RouteChat() {
+    ClientContext context;
+
+    std::shared_ptr<ClientReaderWriter<RouteNote, RouteNote> > stream(
+        stub_->RouteChat(&context));
+
+    std::thread writer([stream]() {
+      std::vector<RouteNote> notes{
+        MakeRouteNote("First message", 0, 0),
+        MakeRouteNote("Second message", 0, 1),
+        MakeRouteNote("Third message", 1, 0),
+        MakeRouteNote("Fourth message", 0, 0)};
+      for (const RouteNote& note : notes) {
+        std::cout << "Sending message " << note.message()
+                  << " at " << note.location().latitude() << ", "
+                  << note.location().longitude() << std::endl;
+        stream->Write(note);
+      }
+      stream->WritesDone();
+    });
+
+    RouteNote server_note;
+    while (stream->Read(&server_note)) {
+      std::cout << "Got message " << server_note.message()
+                << " at " << server_note.location().latitude() << ", "
+                << server_note.location().longitude() << std::endl;
+    }
+    writer.join();
+    Status status = stream->Finish();
+    if (!status.ok()) {
+      std::cout << "RouteChat rpc failed." << std::endl;
+    }
+  }*/
 
 int main(int argc, char* argv[]) {
     
@@ -294,7 +426,8 @@ int main(int argc, char* argv[]) {
     }
     
     while (true) {
-        chatMode(&client);
+        //chatMode(&client);
+        client.sendChat();
     }
     return 0;
 }

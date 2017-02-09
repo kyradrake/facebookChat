@@ -33,6 +33,7 @@ using facebookChat::JoinReply;
 using facebookChat::LeaveRequest;
 using facebookChat::LeaveReply;
 using facebookChat::ChatRequest;
+using facebookChat::ChatMessage;
 using facebookChat::ChatReply;
  
 using namespace std;
@@ -139,16 +140,20 @@ void saveChatToFile(string chat){
     outfile << chat;
 }
  
-void chatSend(string user, string chat, string time){
+string chatSend(string user, string chat, string time){
     string formatted = user + "|" + time + "|" + chat;
     saveChatToFile(formatted);
+    int counter = 0;
     for(int i = 0; i < listOfUsers.size(); i++){
         for(int j = 0; listOfUsers[i].usersConnectedTo.size(); j++){
             if(listOfUsers[i].usersConnectedTo[j] == user){
                 //send formatted to listOfUsers[i].name right here
+                counter++;
             }
         }
     }
+    string rValue = "Sent out message to " + to_string(counter) + " relevant chats\n";
+    return rValue;
 }
 
 vector<string> readInUserChats(string user){
@@ -196,7 +201,7 @@ bool compareDates(string lhs, string rhs){
 }
  
 string lastTwentyChats(string user){
-    string rValue;
+    string rValue = "";
     int userIndex = -1;
     for(int i = 0; i < listOfUsers.size(); i++){
         if(listOfUsers[i].name == user){
@@ -206,6 +211,7 @@ string lastTwentyChats(string user){
     vector<string> totalRelevantChats;
     for(int i = 0; i < listOfUsers[userIndex].usersConnectedTo.size(); i++){
         vector<string> usersChats = readInUserChats(listOfUsers[userIndex].usersConnectedTo[i]);
+        
         for(int j = 0; j < usersChats.size(); j++){
             totalRelevantChats.push_back(usersChats[j]);
         }
@@ -264,6 +270,28 @@ public:
         cout << "Server in Chat function\n";
         reply->set_reply(lastTwentyChats(request->username()));
         return Status::OK;
+    }
+    
+    //process client ChatStream command
+    Status ChatStream(ServerContext* context, ServerReaderWriter<ChatMessage, ChatMessage>* stream) override {
+        
+        cout << "Server in ChatStream function\n";
+        
+        ChatMessage msg;
+        while (stream->Read(&msg)) {
+            cout << "Message Received: " << msg.message() << "\n\n";
+            
+            ChatMessage reply;
+            //reply->set_reply(chatSend(stream->username(), stream->message(), stream->datetime()));
+            
+            reply.set_username("Server");
+            reply.set_message("Success");
+            
+            stream->Write(reply);
+        }
+        
+        return Status::OK;
+
     }
 };
  
