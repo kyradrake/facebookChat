@@ -152,6 +152,42 @@ vector<string> readInUserChats(string user){
     }
     return rValue;
 }
+
+void writeUserDataToFile(){
+    ofstream outfile;
+   
+    outfile.open("userdata.txt", ofstream::out | ofstream::trunc);
+    for(int i = 0; i < listOfUsers.size(); i++){
+        string userDataText = listOfUsers[i].name + "|";
+        for(int j = 0; j < listOfUsers[i].usersConnectedTo.size(); j++){
+            userDataText += listOfUsers[i].usersConnectedTo[j] + "|";
+        }
+        outfile << userDataText << endl;
+    }
+    outfile.close();
+}
+ 
+void readUserDataFromFile(){
+    string line;
+    ifstream inputFile;
+    vector<UserData> rValue;
+   
+    inputFile.open("userdata.txt");
+ 
+    while (getline(inputFile, line)) {
+        UserData newUser;
+        vector<string> formatted = split(line, '|');
+        for(int i = 0; i < formatted.size(); i++){
+            if(i == 0){
+                newUser.name = formatted[i];
+            } else {
+                newUser.usersConnectedTo.push_back(formatted[i]);
+            }
+        }
+        rValue.push_back(newUser);
+    }
+    listOfUsers = rValue;
+}
  
 string lastTwentyChats(string user){
     string rValue = "";
@@ -188,6 +224,7 @@ public:
         if(!userExists(request->username())){
             UserData newUser = UserData(request->username());
             listOfUsers.push_back(newUser);
+            writeUserDataToFile();
         }
         reply->set_reply("Welcome, " + request->username() + "\n");
         return Status::OK;
@@ -206,6 +243,7 @@ public:
                  LeaveReply* reply) override {
         cout << "Server in Leave function\n";
         reply->set_reply(leaveCommand(request->username(), request->chatroom()));
+        writeUserDataToFile();
         return Status::OK;
     }
    
@@ -214,6 +252,7 @@ public:
                 JoinReply* reply) override {
         cout << "Server in Join function\n";
         reply->set_reply(joinCommand(request->username(), request->chatroom()));
+        writeUserDataToFile();
         return Status::OK;
     }
    
@@ -276,6 +315,7 @@ int main(int argc, char* argv[]) {
         portNumber = argv[1];
     }
    
+    readUserDataFromFile();
     startServer(portNumber);
    
     return 0;
