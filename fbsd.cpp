@@ -269,6 +269,8 @@ public:
         
         cout << "Server in ChatStream function\n";
         
+        static string clientUsername = "";
+        
         thread reader([stream]() {
             cout << "Hereeeee\n";
             ChatMessage msg;
@@ -277,15 +279,41 @@ public:
 
                 ChatMessage reply;
                 //reply->set_reply(chatSend(stream->username(), stream->message(), stream->datetime()));
-
+                
+                string formatedMessage = "[" + msg.datetime() + "]<" + msg.username() + 
+                    "> " + msg.message() + "\n";
+                
+                clientUsername = msg.username();
+                
+                // search through users to find all users connected to client
+                // that sent the message
+                for (int i=0; i<listOfUsers.size(); i++) {
+                    for (int j=0; j<listOfUsers[i].usersConnectedTo.size(); j++) {
+                        if(clientUsername == listOfUsers[i].usersConnectedTo[j]) {
+                            listOfUsers[i].messagesToWrite.push(formatedMessage);
+                        }
+                    }
+                }
+                /*
                 reply.set_username(msg.username());
                 reply.set_datetime("");
                 reply.set_message(msg.message());
 
                 stream->Write(reply);
+                */
             }
         });
+        
+        while (clientUsername.size() == 0) {
+            continue;
+        }
+        
+        thread writer([stream]() {
+            cout << "started writer thread\n";
+        });
+        
         reader.join();
+        writer.join();
         //Status status = stream->Finish();
         
         return Status::OK;
