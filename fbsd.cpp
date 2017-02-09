@@ -263,18 +263,25 @@ public:
     Status Chat(ServerContext* context, const ChatRequest* request,
                 ChatReply* reply) override {
         cout << "Server in Chat function\n";
+        
+        
         //reply->set_reply(lastTwentyChats(request->username()));
         return Status::OK;
     }
     
     //process client ChatStream command
     Status ChatStream(ServerContext* context, ServerReaderWriter<ChatMessage, ChatMessage>* stream) override {
+        
+        cout << "In chat stream\n";
+        
         static string clientUsername = "";
+        
+        //static UserData* client;
         
         thread reader([stream]() {
             ChatMessage msg;
             while (stream->Read(&msg)) {
-                cout << "Message Received: " << msg.message() << "\n\n";
+                cout << "Message Received: " << msg.message() << "\n";
 
                 string time = getDateAndTime();
                 
@@ -292,24 +299,77 @@ public:
                     for (int j=0; j<listOfUsers[i].usersConnectedTo.size(); j++) {
                         if(clientUsername == listOfUsers[i].usersConnectedTo[j]) {
                             listOfUsers[i].messagesToWrite.push(formatedMessage);
+                            cout << "Pushing message to " << listOfUsers[i].name << "\n";
                         }
                     }
                 }
+                
+                UserData* client;
+                for (int i=0; i<listOfUsers.size(); i++) {
+                    if(clientUsername == listOfUsers[i].name) {
+                        client = &listOfUsers[i];
+                    }
+                }
+
+                while (client->messagesToWrite.size() > 0) {
+                    // check if there's a message to write to the client
+                    //if(client->messagesToWrite.size() > 0) {
+                        // pop top message from client's queue
+                        string message = client->messagesToWrite.front();
+                        client->messagesToWrite.pop();
+
+                        ChatMessage chatMsgToWrite;
+                        chatMsgToWrite.set_username("Server");
+                        chatMsgToWrite.set_datetime("");
+                        chatMsgToWrite.set_message(message);
+
+                        stream->Write(chatMsgToWrite);
+                    //}
+                    continue;
+                }
             }
         });
+        reader.join();
         
+        /*
         while (clientUsername.size() == 0) {
             continue;
         }
         
         thread writer([stream]() {
-            cout << "started writer thread\n";
+            cout << "started writer thread for " << clientUsername << "\n\n";
+            
+            // get UserData for the client
+            UserData* client;
+            for (int i=0; i<listOfUsers.size(); i++) {
+                if(clientUsername == listOfUsers[i].name) {
+                    client = &listOfUsers[i];
+                }
+            }
+            
+            while (true) {
+                // check if there's a message to write to the client
+                if(client->messagesToWrite.size() > 0) {
+                    // pop top message from client's queue
+                    string message = client->messagesToWrite.front();
+                    client->messagesToWrite.pop();
+                    
+                    ChatMessage chatMsgToWrite;
+                    chatMsgToWrite.set_username("Server");
+                    chatMsgToWrite.set_datetime("");
+                    chatMsgToWrite.set_message(message);
+                    
+                    stream->Write(chatMsgToWrite);
+                }
+                continue;
+            }
         });
         
-        reader.join();
-        writer.join();
-        //Status status = stream->Finish();
         
+        writer.join();
+        //stream->WritesDone();
+        //Status status = stream->Finish();
+        */
         return Status::OK;
     }
 };

@@ -195,14 +195,33 @@ public:
             //stream->WritesDone();
         });
 
-        ChatMessage serverMsg;
-        while (stream->Read(&serverMsg)) {
-          cout << "Got message " << serverMsg.message() << endl;
-                    //<< " at " << server_note.location().latitude() << ", "
-                    //<< server_note.location().longitude() << std::endl;
+        /*
+        // create a reader thread to read in messages from the server
+        thread reader([stream]() {
+            ChatMessage serverMsg;
+            
+            while (stream->Read(&serverMsg)) {
+              cout << "Got message " << serverMsg.message() << endl;
+            }
+        });
+        */
+        
+        
+        while (true) {
+            ChatMessage serverMsg;
+            while (stream->Read(&serverMsg)) {
+                cout << "Got message " << serverMsg.message() << endl;
+                        //<< " at " << server_note.location().latitude() << ", "
+                        //<< server_note.location().longitude() << std::endl;
+            }
         }
+        
+        
+        
+        
         stream->WritesDone();
         writer.join();
+        //reader.join();
         Status status = stream->Finish();
         if (!status.ok()) {
           std::cout << "RouteChat rpc failed." << std::endl;
@@ -211,12 +230,15 @@ public:
     }
 };
 
+// switches the client into command mode, the client stays here until a chat command is issued
 void commandMode(facebookClient* client) {
     string command;
     getline(cin, command);
     
+    // read in the command and split it on whitespace
     vector<string> splitCommand = split(command, ' ');
     
+    // check the first charcters to see if it matches a related command
     if (command.compare(0, 4, "LIST") == 0) {
         client->list();
     }
@@ -288,16 +310,18 @@ void RouteChat() {
 
 int main(int argc, char* argv[]) {
     
-    string hostName = "localhost";
-    string portNumber = "16231";
+    // default values
+    string hostName;
+    string portNumber;
     string username;
     
+    // if arguments are provided, set them
     if (argc >= 4) {
         hostName = argv[1];
         portNumber = argv[2];
         username = argv[3];
     }
-    else {
+    else { // else, terminate
         cerr << "Command Line Arguments Not Provided... Program is Terminating\n";
         return 0;
     }
