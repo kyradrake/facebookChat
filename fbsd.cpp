@@ -269,21 +269,26 @@ public:
         
         cout << "Server in ChatStream function\n";
         
-        ChatMessage msg;
-        while (stream->Read(&msg)) {
-            cout << "Message Received: " << msg.message() << "\n\n";
-            
-            ChatMessage reply;
-            //reply->set_reply(chatSend(stream->username(), stream->message(), stream->datetime()));
-            
-            reply.set_username("Server");
-            reply.set_message("Success");
-            
-            stream->Write(reply);
-        }
+        thread reader([stream]() {
+            cout << "Hereeeee\n";
+            ChatMessage msg;
+            while (stream->Read(&msg)) {
+                cout << "Message Received: " << msg.message() << "\n\n";
+
+                ChatMessage reply;
+                //reply->set_reply(chatSend(stream->username(), stream->message(), stream->datetime()));
+
+                reply.set_username(msg.username());
+                reply.set_datetime("");
+                reply.set_message(msg.message());
+
+                stream->Write(reply);
+            }
+        });
+        reader.join();
+        //Status status = stream->Finish();
         
         return Status::OK;
-
     }
 };
  
