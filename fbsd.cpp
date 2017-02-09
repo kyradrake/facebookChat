@@ -2,19 +2,15 @@
 // fbsd.cpp
 // Facebook Chat Room Server
 // Colin Banigan and Katherine Drake
- 
-#include <fstream>
-#include <iostream>
-#include "UserData.h"
-#include <sstream>
-#include <string>
- 
+
 #include <grpc/grpc.h>
 #include <grpc++/server.h>
 #include <grpc++/server_builder.h>
 #include <grpc++/server_context.h>
 #include <grpc++/security/server_credentials.h>
-#include "facebook.grpc.pb.h"
+
+#include "UserData.h"
+#include "helper.h"
  
 using grpc::Server;
 using grpc::ServerBuilder;
@@ -40,23 +36,6 @@ using namespace std;
  
 vector<UserData> listOfUsers; //global list of all the connected clients
 
-// returns current date and time in a string
-// time format: DD-MM-YYYY-HH:MM:SS
-string getDateAndTime() {
-    // get current date and time
-    time_t t = time(nullptr);
-    struct tm* time = localtime(&t);
-    
-    // convert time to char[]
-    char buffer[100];
-    strftime(buffer,100,"%d-%m-%Y-%H:%M:%S",time);
-    
-    // convert time into a string
-    string dateAndTime(buffer);
-    
-    return dateAndTime;
-}
-
 bool userExists(string user){
     for(int i = 0; i < listOfUsers.size(); i++){
         if(listOfUsers[i].name == user){
@@ -64,22 +43,6 @@ bool userExists(string user){
         }
     }
     return false;
-}
-
-//string split functions below
-void split(const string &s, char delim, vector<string> &elems) {
-	stringstream ss;
-	ss.str(s);
-	string item;
-	while (getline(ss, item, delim)) {
-		elems.push_back(item);
-	}
-}
-
-vector<string> split(const string &s, char delim) {
-	vector<string> elems;
-	split(s, delim, elems);
-	return elems;
 }
 
 //send all of the users and their connected chat rooms back to the specified user
@@ -186,33 +149,6 @@ vector<string> readInUserChats(string user){
         }
     }
     return rValue;
-}
-
-// return true if the date string at lhs is earlier than rhs
-bool compareDates(string lhs, string rhs){
-    vector<string> getDateLHS = split(lhs, '|');
-    vector<string> getDateRHS = split(rhs, '|');
-    vector<string> fLHS = split(getDateLHS[1], '-');
-    vector<string> fRHS = split(getDateRHS[1], '-');
-    if(stoi(fLHS[2]) < stoi(fRHS[2])){ //check year
-        return true;
-    }
-    if(stoi(fLHS[1]) < stoi(fRHS[1])){ //check month
-        return true;
-    }
-    if(stoi(fLHS[0]) < stoi(fRHS[0])){ //check day
-        return true;
-    }
-    if(stoi(fLHS[3]) < stoi(fRHS[3])){ //check hour
-        return true;
-    }
-    if(stoi(fLHS[4]) < stoi(fRHS[4])){ //check minute
-        return true;
-    }
-    if(stoi(fLHS[5]) < stoi(fRHS[5])){ //check second
-        return true;
-    }
-    return false;
 }
  
 //parses the text file for the 20 most recent chat messages

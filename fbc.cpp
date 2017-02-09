@@ -3,18 +3,13 @@
 // Facebook Chat Room Client
 // Colin Banigan and Katherine Drake
 
-#include <iostream>
-#include <iomanip>
-#include <ctime>
-#include <sstream>
-#include <thread>
-
 #include <grpc/grpc.h>
 #include <grpc++/channel.h>
 #include <grpc++/client_context.h>
 #include <grpc++/create_channel.h>
 #include <grpc++/security/credentials.h>
-#include "facebook.grpc.pb.h"
+
+#include "helper.h"
 
 using grpc::Channel;
 using grpc::ClientContext;
@@ -38,23 +33,6 @@ using facebookChat::ChatReply;
 using namespace std;
 
 bool inChatMode = false; //client starts in commandMode
-
-// returns current date and time in a string
-// time format: DD-MM-YYYY-HH:MM:SS
-string getDateAndTime() {
-    // get current date and time
-    time_t t = time(nullptr);
-    struct tm* time = localtime(&t);
-    
-    // convert time to char[]
-    char buffer[100];
-    strftime(buffer,100,"%d-%m-%Y-%H:%M:%S",time);
-    
-    // convert time into a string
-    string dateAndTime(buffer);
-    
-    return dateAndTime;
-}
 
 class facebookClient {
 private:
@@ -228,22 +206,6 @@ public:
         }
     }
 };
-
-//string split functions below
-void split(const string &s, char delim, vector<string> &elems) {
-    stringstream ss;
-    ss.str(s);
-    string item;
-    while (getline(ss, item, delim)) {
-        elems.push_back(item);
-    }
-}
-
-vector<string> split(const string &s, char delim) {
-    vector<string> elems;
-    split(s, delim, elems);
-    return elems;
-}
 
 void commandMode(facebookClient* client) {
     string command;
