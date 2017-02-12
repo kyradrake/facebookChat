@@ -49,27 +49,48 @@ string getDateAndTime() {
 }
 
 // return true if the date string at lhs is earlier than rhs
-bool compareDates(string lhs, string rhs){
+bool compareDates(const string &lhs, const string &rhs){
+    
+    // split message information based on time
     vector<string> getDateLHS = split(lhs, '|');
     vector<string> getDateRHS = split(rhs, '|');
+    
+    // split initial date information
     vector<string> fLHS = split(getDateLHS[1], '-');
     vector<string> fRHS = split(getDateRHS[1], '-');
-    if(stoi(fLHS[2]) < stoi(fRHS[2])){ //check year
+    
+    // split time information that's based on colons
+    vector<string> timeLHS = split(fLHS[3], ':');
+    vector<string> timeRHS = split(fRHS[3], ':');
+    
+    // combine time information
+    vector<string> finalLHS;
+    vector<string> finalRHS;
+    for(int i = 0; i < 3; i++){
+        finalLHS.push_back(fLHS[i]);
+        finalRHS.push_back(fRHS[i]);
+    }
+    for(int i = 0; i < 3; i++){
+        finalLHS.push_back(timeLHS[i]);
+        finalRHS.push_back(timeRHS[i]);
+    }
+    
+    if(stoi(finalLHS[2]) < stoi(finalRHS[2])){ //check year
         return true;
     }
-    if(stoi(fLHS[1]) < stoi(fRHS[1])){ //check month
+    if(stoi(finalLHS[1]) < stoi(finalRHS[1])){ //check month
         return true;
     }
-    if(stoi(fLHS[0]) < stoi(fRHS[0])){ //check day
+    if(stoi(finalLHS[0]) < stoi(finalRHS[0])){ //check day
         return true;
     }
-    if(stoi(fLHS[3]) < stoi(fRHS[3])){ //check hour
+    if(stoi(finalLHS[3]) < stoi(finalRHS[3])){ //check hour
         return true;
     }
-    if(stoi(fLHS[4]) < stoi(fRHS[4])){ //check minute
+    if(stoi(finalLHS[4]) < stoi(finalRHS[4])){ //check minute
         return true;
     }
-    if(stoi(fLHS[5]) < stoi(fRHS[5])){ //check second
+    if(stoi(finalLHS[5]) < stoi(finalRHS[5])){ //check second
         return true;
     }
     return false;

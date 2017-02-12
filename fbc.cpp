@@ -162,69 +162,52 @@ public:
         }
         else {
             // print server's reply
-            cout << reply.reply();
+            cout << reply.message();
             
             // change from command mode to chat mode
             inChatMode = true;
         }
     }
     
-    void sendChat() {         
-
+    void sendChat(string msg) const {         
+        // create chat message and reply objects
+        ChatMessage message;
+        ChatReply reply;
+        
+        // set chat message username and message
+        message.set_username(username);
+        message.set_message(msg);
+        
+        // send chat message to server
         ClientContext context;
+        Status status = stub->SendChatToServer(&context, message, &reply);
         
-        static string name = username;
-
-        shared_ptr<ClientReaderWriter<ChatMessage, ChatMessage> > stream(
-            stub->ChatStream(&context));
-
-        thread writer([stream]() {
-            while (true) {
-                string msg;
-                getline(cin, msg);
-                
-                ChatMessage ChatMsg;
-                ChatMsg.set_username(name);
-                ChatMsg.set_message(msg);
-                ChatMsg.set_datetime("");
-                
-                stream->Write(ChatMsg);
-            }
-            
-            
-            //stream->WritesDone();
-        });
-
-        /*
-        // create a reader thread to read in messages from the server
-        thread reader([stream]() {
-            ChatMessage serverMsg;
-            
-            while (stream->Read(&serverMsg)) {
-              cout << "Got message " << serverMsg.message() << endl;
-            }
-        });
-        */
-        
-        
-        while (true) {
-            ChatMessage serverMsg;
-            while (stream->Read(&serverMsg)) {
-                cout << "Got message " << serverMsg.message() << endl;
-                        //<< " at " << server_note.location().latitude() << ", "
-                        //<< server_note.location().longitude() << std::endl;
-            }
-        }
-        
-        
-        
-        
-        stream->WritesDone();
-        writer.join();
-        //reader.join();
-        Status status = stream->Finish();
+        // check if message was successful
         if (!status.ok()) {
-          std::cout << "RouteChat rpc failed." << std::endl;
+            cout << "Error Occured: Server Cannot Receive Message.\n";
+        }
+    }
+    
+    void receiveChat() {
+        cout << "trying to receive chat\n";
+        
+        // create chat request and reply objects
+        ChatRequest request;
+        ChatReply reply;
+        
+        // set request username
+        request.set_username(username);
+        
+        // send chat request to server
+        ClientContext context;
+        Status status = stub->SendChatToClient(&context, request, &reply);
+        
+        // check if message was successful
+        if (!status.ok()) {
+            cout << "Error Occured: Server Cannot Receive Message.\n";
+        }
+        else if (reply.message() != "") {
+            cout << reply.message() << endl;
         }
         
     }
@@ -258,55 +241,24 @@ void commandMode(facebookClient* client) {
     }
 }
 
-/*
+
 void chatMode(facebookClient* client) {
-    // wait for message via command line
-    string chatMessage;
-    getline(cin, chatMessage);
+    //const facebookClient* fbClient = client;
     
-    // get current date and time
-    string time = getDateAndTime();
+    //thread chat([fbClient]() {
+        while (true) {
+            // wait for message via command line
+            string chatMessage;
+            getline(cin, chatMessage);
+
+            // send chat message to server
+            client->sendChat(chatMessage);
+        }
+    //});
     
-    cout << "Time: " << time << endl;
     
-    // send chat message to server
-    client->sendChat(chatMessage, time);
 }
-*/
-/*
-void RouteChat() {
-    ClientContext context;
 
-    std::shared_ptr<ClientReaderWriter<RouteNote, RouteNote> > stream(
-        stub_->RouteChat(&context));
-
-    std::thread writer([stream]() {
-      std::vector<RouteNote> notes{
-        MakeRouteNote("First message", 0, 0),
-        MakeRouteNote("Second message", 0, 1),
-        MakeRouteNote("Third message", 1, 0),
-        MakeRouteNote("Fourth message", 0, 0)};
-      for (const RouteNote& note : notes) {
-        std::cout << "Sending message " << note.message()
-                  << " at " << note.location().latitude() << ", "
-                  << note.location().longitude() << std::endl;
-        stream->Write(note);
-      }
-      stream->WritesDone();
-    });
-
-    RouteNote server_note;
-    while (stream->Read(&server_note)) {
-      std::cout << "Got message " << server_note.message()
-                << " at " << server_note.location().latitude() << ", "
-                << server_note.location().longitude() << std::endl;
-    }
-    writer.join();
-    Status status = stream->Finish();
-    if (!status.ok()) {
-      std::cout << "RouteChat rpc failed." << std::endl;
-    }
-  }*/
 
 int main(int argc, char* argv[]) {
     
@@ -335,9 +287,12 @@ int main(int argc, char* argv[]) {
         commandMode(&client);
     }
     
+    chatMode(&client);
+    
     while (true) {
         //chatMode(&client);
-        client.sendChat();
+        //client.sendChat();
+        client.receiveChat();
     }
     return 0;
 }

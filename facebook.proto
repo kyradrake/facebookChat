@@ -20,9 +20,11 @@ service fbChatRoom {
     
     rpc Chat(ChatRequest) returns (ChatReply) {}
     
-    rpc ChatStream(stream ChatMessage) returns (stream ChatMessage) {}
+    //rpc ChatStream(stream ChatMessage) returns (stream ChatMessage) {}
     
-    //rpc SendChatToClient(ChatMessage) returns (ChatReply) {}
+    rpc SendChatToServer(ChatMessage) returns (ChatReply) {}
+    
+    rpc SendChatToClient(ChatRequest) returns (ChatReply) {}
 }
 
 
@@ -67,10 +69,9 @@ message ChatRequest {
     string username = 1;
 }
 message ChatReply {
-    string reply = 1;
+    string message = 1;
 }
 message ChatMessage {
     string username = 1;
-    string datetime = 2;
-    string message = 3;
+    string message = 2;
 }

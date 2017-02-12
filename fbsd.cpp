@@ -265,113 +265,73 @@ public:
         cout << "Server in Chat function\n";
         
         
-        //reply->set_reply(lastTwentyChats(request->username()));
+        reply->set_message(lastTwentyChats(request->username()));
         return Status::OK;
     }
     
-    //process client ChatStream command
-    Status ChatStream(ServerContext* context, ServerReaderWriter<ChatMessage, ChatMessage>* stream) override {
+    Status SendChatToServer(ServerContext* context, const ChatMessage* chatMessage,
+                ChatReply* reply) override {
+        cout << "Message Received: " << chatMessage->message() << endl;
         
-        cout << "In chat stream\n";
+        // get current time and date
+        string time = getDateAndTime();
         
-        static string clientUsername = "";
+        // get username for client who send message
+        string clientUsername = chatMessage->username();
+            
+        // save new chat to file
+        string dataForTextFile = clientUsername + "|" + time + "|" + chatMessage->message();
+        saveChatToFile(dataForTextFile);
         
-        //static UserData* client;
-        
-        thread reader([stream]() {
-            ChatMessage msg;
-            while (stream->Read(&msg)) {
-                cout << "Message Received: " << msg.message() << "\n";
+        // format message for other clients
+        string formatedMessage = "[" + time + "]<" + clientUsername + 
+            "> " + chatMessage->message() + "\n";
 
-                string time = getDateAndTime();
-                
-                string dataForTextFile = msg.username() + "|" + time + "|" + msg.message();
-                saveChatToFile(dataForTextFile);
-                
-                string formatedMessage = "[" + time + "]<" + msg.username() + 
-                    "> " + msg.message() + "\n";
-                
-                clientUsername = msg.username();
-                
-                // search through users to find all users connected to client
-                // that sent the message
-                for (int i=0; i<listOfUsers.size(); i++) {
-                    for (int j=0; j<listOfUsers[i].usersConnectedTo.size(); j++) {
-                        if(clientUsername == listOfUsers[i].usersConnectedTo[j]) {
-                            listOfUsers[i].messagesToWrite.push(formatedMessage);
-                            cout << "Pushing message to " << listOfUsers[i].name << "\n";
-                        }
-                    }
-                }
-                
-                UserData* client;
-                for (int i=0; i<listOfUsers.size(); i++) {
-                    if(clientUsername == listOfUsers[i].name) {
-                        client = &listOfUsers[i];
-                    }
-                }
-
-                while (client->messagesToWrite.size() > 0) {
-                    // check if there's a message to write to the client
-                    //if(client->messagesToWrite.size() > 0) {
-                        // pop top message from client's queue
-                        string message = client->messagesToWrite.front();
-                        client->messagesToWrite.pop();
-
-                        ChatMessage chatMsgToWrite;
-                        chatMsgToWrite.set_username("Server");
-                        chatMsgToWrite.set_datetime("");
-                        chatMsgToWrite.set_message(message);
-
-                        stream->Write(chatMsgToWrite);
-                    //}
-                    continue;
+        // search through users to find all users connected 
+        // to client that sent the message and add the new
+        // message to their message queue
+        for (int i=0; i<listOfUsers.size(); i++) {
+            for (int j=0; j<listOfUsers[i].usersConnectedTo.size(); j++) {
+                if(clientUsername == listOfUsers[i].usersConnectedTo[j]) {
+                    listOfUsers[i].messagesToWrite.push(formatedMessage);
+                    cout << "Pushing message to " << listOfUsers[i].name << "\n";
                 }
             }
-        });
-        reader.join();
-        
-        /*
-        while (clientUsername.size() == 0) {
-            continue;
         }
-        
-        thread writer([stream]() {
-            cout << "started writer thread for " << clientUsername << "\n\n";
-            
-            // get UserData for the client
-            UserData* client;
-            for (int i=0; i<listOfUsers.size(); i++) {
-                if(clientUsername == listOfUsers[i].name) {
-                    client = &listOfUsers[i];
-                }
-            }
-            
-            while (true) {
-                // check if there's a message to write to the client
-                if(client->messagesToWrite.size() > 0) {
-                    // pop top message from client's queue
-                    string message = client->messagesToWrite.front();
-                    client->messagesToWrite.pop();
-                    
-                    ChatMessage chatMsgToWrite;
-                    chatMsgToWrite.set_username("Server");
-                    chatMsgToWrite.set_datetime("");
-                    chatMsgToWrite.set_message(message);
-                    
-                    stream->Write(chatMsgToWrite);
-                }
-                continue;
-            }
-        });
-        
-        
-        writer.join();
-        //stream->WritesDone();
-        //Status status = stream->Finish();
-        */
         return Status::OK;
     }
+    
+    Status SendChatToClient (ServerContext* context, const ChatRequest* request,
+                ChatReply* reply) override {
+        
+        // get username for client who sent chat request
+        string clientUsername = request->username();
+        
+        // find client in list of users
+        for (int i=0; i<listOfUsers.size(); i++) {
+            if(clientUsername == listOfUsers[i].name) {
+                
+                // check client's message queue for a message to write to the client
+                if(listOfUsers[i].messagesToWrite.size() > 0) {
+                    
+                    // pop top message from client's queue
+                    string message = listOfUsers[i].messagesToWrite.front();
+                    listOfUsers[i].messagesToWrite.pop();
+
+                    cout << "trying to send message to client\n";
+                    
+                    // send popped message to client
+                    reply->set_message(message);
+                }
+                else {
+                    // if message queue is empty, send blank message to client
+                    reply->set_message("");
+                }
+            }
+        }
+        return Status::OK;
+    }
+    
 };
  
 void startServer(string portNumber) {
