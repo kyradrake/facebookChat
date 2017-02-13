@@ -118,6 +118,7 @@ void saveChatToFile(string chat){
    
     outfile.open("chathistory.txt", ios_base::app);
     outfile << chat << endl;
+    outfile.close();
 }
  
 
@@ -139,20 +140,24 @@ string chatSend(string user, string chat, string time){
 }
 */
 
-vector<string> readInUserChats(string user){
+vector<string> readInUserChats(vector<string> users){
     string line;
 	ifstream inputFile;
     vector<string> rValue;
     
     inputFile.open("chathistory.txt");
-
+    //for(int i = 0; i < users.size(); i++){
+    //}
 	while (getline(inputFile, line)) {
         //formatted in user, time, chat
         vector<string> formatted = split(line, '|');
-		if (user == formatted[0]) {
-            rValue.push_back(line);
+        for(int i = 0; i < users.size(); i++){
+            if (users[i] == formatted[0]) {
+                rValue.push_back(line);
+            }
         }
     }
+    inputFile.close();
     return rValue;
 }
 
@@ -190,6 +195,7 @@ void readUserDataFromFile(){
         rValue.push_back(newUser);
     }
     listOfUsers = rValue;
+    inputFile.close();
 }
  
 string lastTwentyChats(string user){
@@ -200,17 +206,16 @@ string lastTwentyChats(string user){
             userIndex = i;
         }
     }
-    vector<string> totalRelevantChats;
-    for(int i = 0; i < listOfUsers[userIndex].usersConnectedTo.size(); i++){
-        vector<string> usersChats = readInUserChats(listOfUsers[userIndex].usersConnectedTo[i]);
-        
-        for(int j = 0; j < usersChats.size(); j++){
-            totalRelevantChats.push_back(usersChats[j]);
-        }
+    vector<string> totalRelevantChats = readInUserChats(listOfUsers[userIndex].usersConnectedTo);
+    vector<string> reversed;
+    for(int i = (totalRelevantChats.size()-1); i >= 0; i--){
+        reversed.push_back(totalRelevantChats[i]);
     }
-    sort(totalRelevantChats.begin(), totalRelevantChats.end(), compareDates);
-    for(int i = 0; i < totalRelevantChats.size() && i < 20; i++){
-        vector<string> formatted = split(totalRelevantChats[i], '|');
+    for(int i = 19; i >= 0; i--){
+        if(i > reversed.size() - 1){
+            i = reversed.size() - 1;
+        }
+        vector<string> formatted = split(reversed[i], '|');
         rValue += "[" + formatted[1] + "]<" + formatted[0] + "> " + formatted[2] + "\n";
     }
     return rValue;
@@ -223,7 +228,6 @@ public:
     // process client Login command
     Status Login(ServerContext* context, const LoginRequest* request,
                  LoginReply* reply) override {
-        cout << "Server in Login function\n";
         if(!userExists(request->username())){
             UserData newUser = UserData(request->username());
             listOfUsers.push_back(newUser);
@@ -236,7 +240,6 @@ public:
     // process client List command
     Status List(ServerContext* context, const ListRequest* request,
                 ListReply* reply) override {
-        cout << "Server in List function\n";
         reply->set_reply(listCommand() + "\n");
         return Status::OK;
     }
@@ -244,7 +247,6 @@ public:
     // process client Leave command
     Status Leave(ServerContext* context, const LeaveRequest* request,
                  LeaveReply* reply) override {
-        cout << "Server in Leave function\n";
         reply->set_reply(leaveCommand(request->username(), request->chatroom()));
         writeUserDataToFile();
         return Status::OK;
@@ -253,7 +255,6 @@ public:
     // process client Join command
     Status Join(ServerContext* context, const JoinRequest* request,
                 JoinReply* reply) override {
-        cout << "Server in Join function\n";
         reply->set_reply(joinCommand(request->username(), request->chatroom()));
         writeUserDataToFile();
         return Status::OK;
@@ -262,17 +263,12 @@ public:
     // process client Chat command
     Status Chat(ServerContext* context, const ChatRequest* request,
                 ChatReply* reply) override {
-        cout << "Server in Chat function\n";
-        
-        
         reply->set_message(lastTwentyChats(request->username()));
         return Status::OK;
     }
     
     Status SendChatToServer(ServerContext* context, const ChatMessage* chatMessage,
                 ChatReply* reply) override {
-        cout << "Message Received: " << chatMessage->message() << endl;
-        
         // get current time and date
         string time = getDateAndTime();
         
@@ -285,7 +281,7 @@ public:
         
         // format message for other clients
         string formatedMessage = "[" + time + "]<" + clientUsername + 
-            "> " + chatMessage->message() + "\n";
+            "> " + chatMessage->message();
 
         // search through users to find all users connected 
         // to client that sent the message and add the new

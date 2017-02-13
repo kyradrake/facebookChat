@@ -9,6 +9,8 @@
 #include <grpc++/create_channel.h>
 #include <grpc++/security/credentials.h>
 
+#include <pthread.h>
+
 #include "helper.h"
 
 using grpc::Channel;
@@ -189,7 +191,6 @@ public:
     }
     
     void receiveChat() {
-        cout << "trying to receive chat\n";
         
         // create chat request and reply objects
         ChatRequest request;
@@ -242,17 +243,20 @@ void commandMode(facebookClient* client) {
 }
 
 
-void chatMode(facebookClient* client) {
+void* chatMode(void* client) {
     //const facebookClient* fbClient = client;
     
-    //thread chat([fbClient]() {
+    
+    facebookClient* fbClient = (facebookClient*) client;
+    
+    //thread chat([client]() {
         while (true) {
             // wait for message via command line
             string chatMessage;
             getline(cin, chatMessage);
 
             // send chat message to server
-            client->sendChat(chatMessage);
+            fbClient->sendChat(chatMessage);
         }
     //});
     
@@ -287,12 +291,21 @@ int main(int argc, char* argv[]) {
         commandMode(&client);
     }
     
-    chatMode(&client);
+    //chatMode(&client);
+    pthread_t chatThread; 
+    
+    int createChatThread = pthread_create (&chatThread, NULL, chatMode, (void*) &client);
+    if (createChatThread < 0) {
+        cout << "ERROR: Couldn't Create Chat Thread\n";
+    }
     
     while (true) {
         //chatMode(&client);
         //client.sendChat();
         client.receiveChat();
     }
+    
+    pthread_join(chatThread, NULL); 
+    
     return 0;
 }
