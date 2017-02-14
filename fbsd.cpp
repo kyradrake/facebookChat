@@ -36,7 +36,7 @@ using namespace std;
  
 vector<UserData> listOfUsers;   // global list of all users 
 
-// check is a user exists 
+// helper function to check if a user exists 
 bool userExists(string user) {
     for (int i = 0; i < listOfUsers.size(); i++) {
         if (listOfUsers[i].name == user) {
@@ -48,16 +48,26 @@ bool userExists(string user) {
 
 // send all of the users and their connected chat rooms back to the specified user
 string listCommand() {
+    
+    // empty string to return with the list data
     string totalList = "";
+    
+    // iterate through all of the users
     for (int i = 0; i < listOfUsers.size(); i++) {
+        
+        // add the current username and the users connected of the user in the for loop
         totalList += "User: " + listOfUsers[i].name + "\n";
         totalList += "Users connected: [";
+        
+        // add the users connected to the string, formatted with a comma if not the last user in the vector
         for (int j = 0; j < listOfUsers[i].usersConnectedTo.size(); j++) {
             totalList += listOfUsers[i].usersConnectedTo[j];
             if (j != listOfUsers[i].usersConnectedTo.size() - 1) {
                 totalList += ", ";
             }
         }
+        
+        // formatting to look nice
         totalList += "]\n";
         totalList += "-------------------------------------------------------------\n";
     }
@@ -66,18 +76,28 @@ string listCommand() {
  
 // take a specified user and add another specified user to their list of connected users
 string joinCommand(string user, string userToJoin) {
-    if (!userExists(userToJoin)){
+    
+    // check to see if user exists
+    if (!userExists(userToJoin)) {
         string rValue = "ERROR: " + userToJoin + " does not exist\n";
         return rValue;
     }
+    
+    // iterate through all of the users
     for (int i = 0; i < listOfUsers.size(); i++) {
-        if (listOfUsers[i].name == user){
+        
+        // check if we're on the correct set of user data
+        if (listOfUsers[i].name == user) {
+            
+            // loop through the users previously joined to see if we've already joined the specified user
             bool exists = false;
             for (int j = 0; j < listOfUsers[i].usersConnectedTo.size(); j++) {
                 if (listOfUsers[i].usersConnectedTo[j] == userToJoin) {
                     exists = true;
                 }
             }
+            
+            // if we haven't already joined, join the specified user
             if (!exists) {
                 listOfUsers[i].usersConnectedTo.push_back(userToJoin);
                 string rValue = "Added " + user + " to " + userToJoin + " successfully\n";
@@ -85,21 +105,29 @@ string joinCommand(string user, string userToJoin) {
             }
         }
     }
+    
+    // couldn't join the user, print out error statement for client
     string rValue = "ERROR: could not join " + userToJoin + "'s chat room on " + user + "'s account\n";
     return rValue;
 }
  
 // take a specified user and remove another specified user from their list of connected users
 string leaveCommand(string user, string userToLeave) {
+    
+    // check to see if user exists
     if (!userExists(userToLeave)) {
         string rValue = "ERROR: " + userToLeave + " does not exist\n";
         return rValue;
     }
+    
     // iterate through users to see if the current user exists
     for (int i = 0; i < listOfUsers.size(); i++) {
         if (listOfUsers[i].name == user) {
-            // user exists, check to see if the user
+            
+            // user exists, check to see if the user is already connected
             for (int j = 0; j < listOfUsers[i].usersConnectedTo.size(); j++) {
+                
+                // if the user is already connected, remove them from the list of users connected
                 if (listOfUsers[i].usersConnectedTo[j] == userToLeave) {
                     listOfUsers[i].usersConnectedTo.erase(listOfUsers[i].usersConnectedTo.begin()+j);
                     string rValue = "Left " + userToLeave + "'s chat room on " + user + "'s account successfully\n";
@@ -108,6 +136,8 @@ string leaveCommand(string user, string userToLeave) {
             }
         }
     }
+    
+    // couldn't leave the user, print out error statement for client
     string rValue = "ERROR: could not leave " + userToLeave + "'s chat room on " + user + "'s account\n";
     return rValue;
 }
@@ -121,6 +151,7 @@ void saveChatToFile(string chat) {
     outfile.close();
 }
 
+// reads in the messages from the users specified in the argument
 vector<string> readInUserChats(vector<string> users) {
     string line;
 	ifstream inputFile;
@@ -128,23 +159,33 @@ vector<string> readInUserChats(vector<string> users) {
     
     inputFile.open("chathistory.txt");
 
+    // read in all the lines of chathistory.txt
 	while (getline(inputFile, line)) {
-        //formatted in user, time, chat
+        
+        // split the data into a vector of strings in the order of user, time, chat
         vector<string> formatted = split(line, '|');
-        for(int i = 0; i < users.size(); i++){
+        
+        for (int i = 0; i < users.size(); i++) {
+            
+            // if the user in the message was in the arguments, save the message
             if (users[i] == formatted[0]) {
                 rValue.push_back(line);
             }
         }
     }
+    
     inputFile.close();
     return rValue;
 }
 
+// writes all of the saved user data in listOfUsers to the file
 void writeUserDataToFile() {
     ofstream outfile;
    
+    // open userdata.txt at the very beginning of the file, prepare to overwrite
     outfile.open("userdata.txt", ofstream::out | ofstream::trunc);
+    
+    // for each line, write the username and the list of users connected
     for (int i = 0; i < listOfUsers.size(); i++) {
         string userDataText = listOfUsers[i].name + "|";
         for (int j = 0; j < listOfUsers[i].usersConnectedTo.size(); j++) {
@@ -154,7 +195,8 @@ void writeUserDataToFile() {
     }
     outfile.close();
 }
- 
+
+// reads in all of the saved user data in userdata.txt and reloads the global data structure
 void readUserDataFromFile() {
     string line;
     ifstream inputFile;
@@ -162,35 +204,60 @@ void readUserDataFromFile() {
    
     inputFile.open("userdata.txt");
  
+    // read in all the lines of userdata.txt
     while (getline(inputFile, line)) {
+        
+        // create a new user
         UserData newUser;
+        
+        // format the line read in into username and the users subscribed to
         vector<string> formatted = split(line, '|');
         for (int i = 0; i < formatted.size(); i++) {
+            
+            // if we're on the first username, set that as the name. Otherwise, it's a user connected to
             if (i == 0) {
                 newUser.name = formatted[i];
             } else {
                 newUser.usersConnectedTo.push_back(formatted[i]);
             }
         }
+        
+        // pushback the new user into the vector
         rValue.push_back(newUser);
     }
+    
+    //set listOfUsers to the data read in from the text file
     listOfUsers = rValue;
     inputFile.close();
 }
- 
+
+// prints out the most recent twenty chats of the users the specified user is connected to
 string lastTwentyChats(string user) {
     string rValue = "";
     int userIndex = -1;
+    
+    // find the index of the user specified
     for (int i = 0; i < listOfUsers.size(); i++) {
         if (listOfUsers[i].name == user) {
             userIndex = i;
         }
     }
+    
+    // read in the relevant chats from the chat history
     vector<string> totalRelevantChats = readInUserChats(listOfUsers[userIndex].usersConnectedTo);
+    
+    // reverse the data read in to start from the most recent first
     vector<string> reversed;
     for (int i = (totalRelevantChats.size()-1); i >= 0; i--) {
         reversed.push_back(totalRelevantChats[i]);
     }
+    
+    // if reversed has no elements, return immediately
+    if(reversed.size() == 0){
+        return rValue;
+    }
+    
+    // format the most recent data into a string in message format
     for (int i = 19; i >= 0; i--) {
         if (i > reversed.size() - 1) {
             i = reversed.size() - 1;
@@ -243,6 +310,15 @@ public:
     // process client Chat command
     Status Chat(ServerContext* context, const ChatRequest* request,
                 ChatReply* reply) override {
+        
+        for (int i = 0; i < listOfUsers.size(); i++) {
+            if (listOfUsers[i].name == request->username()) {
+                // clear user's queue
+                queue<string> empty;
+                swap(listOfUsers[i].messagesToWrite, empty);
+            }
+        }
+        
         reply->set_message(lastTwentyChats(request->username()));
         return Status::OK;
     }
@@ -270,7 +346,6 @@ public:
             for (int j=0; j<listOfUsers[i].usersConnectedTo.size(); j++) {
                 if(clientUsername == listOfUsers[i].usersConnectedTo[j]) {
                     listOfUsers[i].messagesToWrite.push(formatedMessage);
-                    cout << "Pushing message to " << listOfUsers[i].name << "\n";
                 }
             }
         }
@@ -293,8 +368,6 @@ public:
                     // pop top message from client's queue
                     string message = listOfUsers[i].messagesToWrite.front();
                     listOfUsers[i].messagesToWrite.pop();
-
-                    cout << "trying to send message to client\n";
                     
                     // send popped message to client
                     reply->set_message(message);
