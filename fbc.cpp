@@ -34,7 +34,7 @@ using facebookChat::ChatReply;
 
 using namespace std;
 
-bool inChatMode = false; //client starts in commandMode
+bool inChatMode = false;    //client starts in commandMode
 
 class facebookClient {
 private:
@@ -42,7 +42,7 @@ private:
     string username;
     
 public:
-    
+    // client constructor
     facebookClient(string address, string uname) {
         // create a new channel to server
         shared_ptr<Channel> channel = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
@@ -56,6 +56,7 @@ public:
         username = uname;
     }
     
+    // client "logs in" to server 
     void login() {
         // create login request and reply objects
         LoginRequest request;
@@ -78,6 +79,7 @@ public:
         }
     }
     
+    // LIST command
     void list() {
         // create list request and reply objects
         ListRequest request;
@@ -100,6 +102,7 @@ public:
         }
     }
     
+    // JOIN command
     void join(string chatRoom) {
         // create join request and reply objects
         JoinRequest request;
@@ -123,6 +126,7 @@ public:
         }
     }
     
+    // LEAVE command
     void leave(string chatRoom) {
         // create leave request and reply objects
         LeaveRequest request;
@@ -146,6 +150,7 @@ public:
         }
     }
     
+    // CHAT command
     void chat() {
         // create chat request and reply objects
         ChatRequest request;
@@ -171,6 +176,7 @@ public:
         }
     }
     
+    // client sends chat message to server
     void sendChat(string msg) const {         
         // create chat message and reply objects
         ChatMessage message;
@@ -190,8 +196,8 @@ public:
         }
     }
     
+    // client receives chat from server
     void receiveChat() {
-        
         // create chat request and reply objects
         ChatRequest request;
         ChatReply reply;
@@ -210,11 +216,10 @@ public:
         else if (reply.message() != "") {
             cout << reply.message() << endl;
         }
-        
     }
 };
 
-// switches the client into command mode, the client stays here until a chat command is issued
+// manages commands while client is in command mode
 void commandMode(facebookClient* client) {
     string command;
     getline(cin, command);
@@ -242,31 +247,26 @@ void commandMode(facebookClient* client) {
     }
 }
 
-
+// continuously waits for client chat messages
 void* chatMode(void* client) {
-    //const facebookClient* fbClient = client;
-    
-    
     facebookClient* fbClient = (facebookClient*) client;
     
-    //thread chat([client]() {
-        while (true) {
-            // wait for message via command line
-            string chatMessage;
-            getline(cin, chatMessage);
+    while (true) {
+        // wait for message via command line
+        string chatMessage;
+        getline(cin, chatMessage);
 
+        // check for valid message
+        if (chatMessage != "" && chatMessage != "\n") {
             // send chat message to server
             fbClient->sendChat(chatMessage);
         }
-    //});
-    
-    
+    }
 }
 
 
 int main(int argc, char* argv[]) {
     
-    // default values
     string hostName;
     string portNumber;
     string username;
@@ -277,7 +277,7 @@ int main(int argc, char* argv[]) {
         portNumber = argv[2];
         username = argv[3];
     }
-    else { // else, terminate
+    else {      // else, terminate program
         cerr << "Command Line Arguments Not Provided... Program is Terminating\n";
         return 0;
     }
@@ -285,26 +285,27 @@ int main(int argc, char* argv[]) {
     // create facebook chat client
     facebookClient client(hostName + ":" + portNumber, username);
     
+    // send "login" request to server
     client.login();
     
+    // start in command mode
     while (!inChatMode) {
         commandMode(&client);
     }
     
-    //chatMode(&client);
+    // create thread for client to send messages to server
     pthread_t chatThread; 
-    
     int createChatThread = pthread_create (&chatThread, NULL, chatMode, (void*) &client);
     if (createChatThread < 0) {
         cout << "ERROR: Couldn't Create Chat Thread\n";
     }
     
+    // continuously poll for messages from server
     while (true) {
-        //chatMode(&client);
-        //client.sendChat();
         client.receiveChat();
     }
     
+    // join chat thread
     pthread_join(chatThread, NULL); 
     
     return 0;

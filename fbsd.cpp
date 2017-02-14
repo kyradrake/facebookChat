@@ -34,51 +34,51 @@ using facebookChat::ChatReply;
  
 using namespace std;
  
-vector<UserData> listOfUsers; //global list of all the connected clients
+vector<UserData> listOfUsers;   // global list of all users 
 
-bool userExists(string user){
-    for(int i = 0; i < listOfUsers.size(); i++){
-        if(listOfUsers[i].name == user){
+// check is a user exists 
+bool userExists(string user) {
+    for (int i = 0; i < listOfUsers.size(); i++) {
+        if (listOfUsers[i].name == user) {
             return true;
         }
     }
     return false;
 }
 
-//send all of the users and their connected chat rooms back to the specified user
-string listCommand(){
+// send all of the users and their connected chat rooms back to the specified user
+string listCommand() {
     string totalList = "";
-    for(int i = 0; i < listOfUsers.size(); i++){
+    for (int i = 0; i < listOfUsers.size(); i++) {
         totalList += "User: " + listOfUsers[i].name + "\n";
         totalList += "Users connected: [";
-        for(int j = 0; j < listOfUsers[i].usersConnectedTo.size(); j++){
+        for (int j = 0; j < listOfUsers[i].usersConnectedTo.size(); j++) {
             totalList += listOfUsers[i].usersConnectedTo[j];
-            if(j != listOfUsers[i].usersConnectedTo.size() - 1){
+            if (j != listOfUsers[i].usersConnectedTo.size() - 1) {
                 totalList += ", ";
             }
         }
         totalList += "]\n";
         totalList += "-------------------------------------------------------------\n";
     }
-   
     return totalList;
 }
  
-//take a specified user and add another specified user to their list of connected users
-string joinCommand(string user, string userToJoin){
-    if(!userExists(userToJoin)){
+// take a specified user and add another specified user to their list of connected users
+string joinCommand(string user, string userToJoin) {
+    if (!userExists(userToJoin)){
         string rValue = "ERROR: " + userToJoin + " does not exist\n";
         return rValue;
     }
-    for(int i = 0; i < listOfUsers.size(); i++){
-        if(listOfUsers[i].name == user){
+    for (int i = 0; i < listOfUsers.size(); i++) {
+        if (listOfUsers[i].name == user){
             bool exists = false;
-            for(int j = 0; j < listOfUsers[i].usersConnectedTo.size(); j++){
-                if(listOfUsers[i].usersConnectedTo[j] == userToJoin) {
+            for (int j = 0; j < listOfUsers[i].usersConnectedTo.size(); j++) {
+                if (listOfUsers[i].usersConnectedTo[j] == userToJoin) {
                     exists = true;
                 }
             }
-            if(!exists){
+            if (!exists) {
                 listOfUsers[i].usersConnectedTo.push_back(userToJoin);
                 string rValue = "Added " + user + " to " + userToJoin + " successfully\n";
                 return rValue;
@@ -89,18 +89,18 @@ string joinCommand(string user, string userToJoin){
     return rValue;
 }
  
-//take a specified user and remove another specified user from their list of connected users
-string leaveCommand(string user, string userToLeave){
-    if(!userExists(userToLeave)){
+// take a specified user and remove another specified user from their list of connected users
+string leaveCommand(string user, string userToLeave) {
+    if (!userExists(userToLeave)) {
         string rValue = "ERROR: " + userToLeave + " does not exist\n";
         return rValue;
     }
-    //iterate through users to see if the current user exists
-    for(int i = 0; i < listOfUsers.size(); i++){
-        if(listOfUsers[i].name == user){
-            //user exists, check to see if the user
-            for(int j = 0; j < listOfUsers[i].usersConnectedTo.size(); j++){
-                if(listOfUsers[i].usersConnectedTo[j] == userToLeave) {
+    // iterate through users to see if the current user exists
+    for (int i = 0; i < listOfUsers.size(); i++) {
+        if (listOfUsers[i].name == user) {
+            // user exists, check to see if the user
+            for (int j = 0; j < listOfUsers[i].usersConnectedTo.size(); j++) {
+                if (listOfUsers[i].usersConnectedTo[j] == userToLeave) {
                     listOfUsers[i].usersConnectedTo.erase(listOfUsers[i].usersConnectedTo.begin()+j);
                     string rValue = "Left " + userToLeave + "'s chat room on " + user + "'s account successfully\n";
                     return rValue;
@@ -112,42 +112,22 @@ string leaveCommand(string user, string userToLeave){
     return rValue;
 }
  
-//takes the chat sent from the specified user and appends it to their chat database file
-void saveChatToFile(string chat){
+// takes the chat sent from the specified user and appends it to their chat database file
+void saveChatToFile(string chat) {
     ofstream outfile;
    
     outfile.open("chathistory.txt", ios_base::app);
     outfile << chat << endl;
     outfile.close();
 }
- 
 
-/*
-string chatSend(string user, string chat, string time){
-    string formatted = user + "|" + time + "|" + chat;
-    saveChatToFile(formatted);
-    int counter = 0;
-    for(int i = 0; i < listOfUsers.size(); i++){
-        for(int j = 0; listOfUsers[i].usersConnectedTo.size(); j++){
-            if(listOfUsers[i].usersConnectedTo[j] == user){
-                //send formatted to listOfUsers[i].name right here
-                counter++;
-            }
-        }
-    }
-    string rValue = "Sent out message to " + to_string(counter) + " relevant chats\n";
-    return rValue;
-}
-*/
-
-vector<string> readInUserChats(vector<string> users){
+vector<string> readInUserChats(vector<string> users) {
     string line;
 	ifstream inputFile;
     vector<string> rValue;
     
     inputFile.open("chathistory.txt");
-    //for(int i = 0; i < users.size(); i++){
-    //}
+
 	while (getline(inputFile, line)) {
         //formatted in user, time, chat
         vector<string> formatted = split(line, '|');
@@ -161,13 +141,13 @@ vector<string> readInUserChats(vector<string> users){
     return rValue;
 }
 
-void writeUserDataToFile(){
+void writeUserDataToFile() {
     ofstream outfile;
    
     outfile.open("userdata.txt", ofstream::out | ofstream::trunc);
-    for(int i = 0; i < listOfUsers.size(); i++){
+    for (int i = 0; i < listOfUsers.size(); i++) {
         string userDataText = listOfUsers[i].name + "|";
-        for(int j = 0; j < listOfUsers[i].usersConnectedTo.size(); j++){
+        for (int j = 0; j < listOfUsers[i].usersConnectedTo.size(); j++) {
             userDataText += listOfUsers[i].usersConnectedTo[j] + "|";
         }
         outfile << userDataText << endl;
@@ -175,7 +155,7 @@ void writeUserDataToFile(){
     outfile.close();
 }
  
-void readUserDataFromFile(){
+void readUserDataFromFile() {
     string line;
     ifstream inputFile;
     vector<UserData> rValue;
@@ -185,8 +165,8 @@ void readUserDataFromFile(){
     while (getline(inputFile, line)) {
         UserData newUser;
         vector<string> formatted = split(line, '|');
-        for(int i = 0; i < formatted.size(); i++){
-            if(i == 0){
+        for (int i = 0; i < formatted.size(); i++) {
+            if (i == 0) {
                 newUser.name = formatted[i];
             } else {
                 newUser.usersConnectedTo.push_back(formatted[i]);
@@ -198,21 +178,21 @@ void readUserDataFromFile(){
     inputFile.close();
 }
  
-string lastTwentyChats(string user){
+string lastTwentyChats(string user) {
     string rValue = "";
     int userIndex = -1;
-    for(int i = 0; i < listOfUsers.size(); i++){
-        if(listOfUsers[i].name == user){
+    for (int i = 0; i < listOfUsers.size(); i++) {
+        if (listOfUsers[i].name == user) {
             userIndex = i;
         }
     }
     vector<string> totalRelevantChats = readInUserChats(listOfUsers[userIndex].usersConnectedTo);
     vector<string> reversed;
-    for(int i = (totalRelevantChats.size()-1); i >= 0; i--){
+    for (int i = (totalRelevantChats.size()-1); i >= 0; i--) {
         reversed.push_back(totalRelevantChats[i]);
     }
-    for(int i = 19; i >= 0; i--){
-        if(i > reversed.size() - 1){
+    for (int i = 19; i >= 0; i--) {
+        if (i > reversed.size() - 1) {
             i = reversed.size() - 1;
         }
         vector<string> formatted = split(reversed[i], '|');
@@ -228,7 +208,7 @@ public:
     // process client Login command
     Status Login(ServerContext* context, const LoginRequest* request,
                  LoginReply* reply) override {
-        if(!userExists(request->username())){
+        if (!userExists(request->username())) {
             UserData newUser = UserData(request->username());
             listOfUsers.push_back(newUser);
             writeUserDataToFile();
@@ -335,7 +315,6 @@ void startServer(string portNumber) {
     facebookServer facebookServer;
    
     // gRPC class object to create a gRPC server
-    // man page for ServerBuilder: http://www.grpc.io/grpc/cpp/classgrpc_1_1_server_builder.html#a0b06b5828b892feeb6541c8eeae2d542
     ServerBuilder serverBuilder;
    
     // binds server to localhost address

@@ -16,7 +16,7 @@
 using namespace std;
 
 // string split functions below
-// splits a string into a vector of strings be delimeter
+// splits a string into a vector of strings by delimeter
 void split(const string &s, char delim, vector<string> &elems) {
     stringstream ss;
     ss.str(s);

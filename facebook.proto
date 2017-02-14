@@ -3,32 +3,34 @@
 // Server Protocol Buffers
 // Colin Banigan and Katherine Drake
 
-// Initialize Service
-
+// use grpc 3
 syntax = "proto3";
 
 package facebookChat;
 
 service fbChatRoom {
+    // user runs client
     rpc Login(LoginRequest) returns (LoginReply) {}
     
+    // LIST command
     rpc List(ListRequest) returns (ListReply) {}
     
+    // JOIN command
     rpc Join(JoinRequest) returns (JoinReply) {}
     
+    // LEAVE command
     rpc Leave(LeaveRequest) returns (LeaveReply) {}
     
+    // CHAT command
     rpc Chat(ChatRequest) returns (ChatReply) {}
     
-    //rpc ChatStream(stream ChatMessage) returns (stream ChatMessage) {}
-    
+    // client sends chat message to server
     rpc SendChatToServer(ChatMessage) returns (ChatReply) {}
     
+    // server sends chat message to client
     rpc SendChatToClient(ChatRequest) returns (ChatReply) {}
 }
 
-
-// Initialize Messages
 // Login Messages
 message LoginRequest {
     string username = 1;
